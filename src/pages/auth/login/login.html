@@ -1,34 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>SuperFood - Inicio</title>
+
+    <link rel="stylesheet" href="/src/style.css">
+
+    <link rel="stylesheet" href="./login.css">
 </head>
 
 <body>
-    <div>
-        <form id="form">
-            <div>
+    <div class="background"></div>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <h2>SuperFood</h2>
+            <h3>Iniciar Sesión</h3>
+
+            <form id="form">
                 <label for="email">Email</label>
-                <input id="email" name="email" autocomplete="off" type="email" placeholder="example@example.com"
-                    required></input>
-            </div>
-            <div>
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" placeholder="**********" required></input>
-            </div>
-        
+                <input type="email" id="email" placeholder="ejemplo@correo.com" required>
 
-            <button type="submit">
-                Send
-            </button>
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
 
+                <button type="submit" class="btn">Ingresar</button>
+            </form>
 
-        </form>
+            <p>¿No tienes cuenta? <a href="../register/register.html">Regístrate</a></p>
+        </div>
     </div>
+
     <script type="module" src="./login.ts"></script>
 </body>
-
 </html>
