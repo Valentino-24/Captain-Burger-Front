@@ -1,19 +1,19 @@
 import type { IUser } from "../../../types/IUser";
-import type { Rol } from "../../../types/Rol";
 import { saveUser } from "../../../utils/localStorage";
 import { navigate } from "../../../utils/navigate";
 
 const loginForm = document.getElementById("form") as HTMLFormElement;
 const emailInput = document.getElementById("email") as HTMLInputElement;
 const passwordInput = document.getElementById("password") as HTMLInputElement;
+const nameInput = document.getElementById("name") as HTMLInputElement;
 
 loginForm.addEventListener("submit", (e: SubmitEvent) => {
   e.preventDefault();
+  const nombre = nameInput.value;
   const email = emailInput.value;
   const password = passwordInput.value;
-  const role = "client" as Rol;
 
-  if (!email || !password || !role) {
+  if (!email || !password || !nombre) {
     alert("NO estan todos los datos");
     return;
   }
@@ -22,16 +22,16 @@ loginForm.addEventListener("submit", (e: SubmitEvent) => {
   // verificarian el usuario
   //caso practico
   const user: IUser = {
+    nombre,
     email,
-    role,
-    loggedIn: true,
+    password
   };
 
   saveUser(user);
 
-  if (user.role === "admin") {
+  if (user.rol == "ADMIN") {
     navigate("/src/pages/admin/home/home.html");
-  } else if (user.role === "client") {
+  } else if (user.rol == "USUARIO") {
     navigate("/src/pages/client/home/home.html");
   }
 });

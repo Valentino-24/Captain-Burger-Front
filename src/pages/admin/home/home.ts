@@ -13,4 +13,4 @@ const initPage = () => {
   checkAuthUser("admin", "/src/pages/auth/login/login.html");
 };
 
-initPage();
+
