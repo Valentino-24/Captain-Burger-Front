@@ -29,14 +29,14 @@ export const crearUsuario = async (usuarioData: {
   }
 };
 
-export const loginUsuario = async (mail: string, contrasenia: string) => {
+export const loginUsuario = async (email: string, password: string) => {
   try {
     const response = await fetch(`${API_URL}/usuarios/login`, {  
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ mail, contrasenia }),
+      body: JSON.stringify({ email, password }),
     });
     if (!response.ok) {
       alert("❌ Usuario o contraseña incorrectos");

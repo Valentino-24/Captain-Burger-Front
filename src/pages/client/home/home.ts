@@ -10,7 +10,8 @@ buttonLogout.addEventListener("click", () => {
 });
 
 const initPage = () => {
-  checkAuthUser("client", "/src/pages/auth/login/login.html");
+  checkAuthUser("USUARIO", "/src/pages/auth/login/login.html");
 };
 
+initPage();
 

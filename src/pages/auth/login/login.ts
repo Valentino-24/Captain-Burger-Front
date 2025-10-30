@@ -20,10 +20,14 @@ loginForm.addEventListener("submit", (e: SubmitEvent) => {
  const user: IUser = {
   nombre:"",
   email,
-  password
+  password,
 };
 
 inicioSesion(user);
-
-
+alert(user.rol);
+if (user.rol == "ADMIN") {
+    navigate("/src/pages/admin/home/home.html");
+  } else if (user.rol == "USUARIO") {
+    navigate("/src/pages/client/home/home.html");
+  }
 });
