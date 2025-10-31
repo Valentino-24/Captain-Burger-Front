@@ -17,7 +17,7 @@ loginForm.addEventListener("submit", (e: SubmitEvent) => {
     return;
   }
 
- const user: IUser = {
+  const user: IUser = {
   nombre:"",
   email,
   password
