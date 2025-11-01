@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Store - Categorías</title>
+    <link rel="stylesheet" href="../../../style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">🍔 Food Store</div>
+        <div class="user-info">
+            <span>Tienda</span>
+            <span>Panel Admin</span>
+            <span>Juan Pérez</span>
+            <button>Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <div class="sidebar">
+        <h3>Administración</h3>
+        <ul>
+            <li><a href="#">📊 Dashboard</a></li>
+            <li><a href="#" class="active">📋 Categorías</a></li>
+            <li><a href="../products/products.html">🍔 Productos</a></li>
+            <li><a href="#">📦 Pedidos</a></li>
+            <li><a href="#">📄 Ver Tienda</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header-main">
+            <h1>Gestión de Categorías</h1>
+            <button id="btn-nueva-categoria" class="btn btn-primary">+ Nueva Categoría</button>
+        </div>
+
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-categorias-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="modal-categoria">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Nueva Categoría</h2>
+                <span id="btn-cerrar-modal" class="close">&times;</span>
+            </div>
+            
+            <form id="form-categoria">
+                <input type="hidden" id="categoria-id">
+                
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input id="nombre" type="text" placeholder="Nombre de la categoría" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="descripcion" placeholder="Descripción de la categoría" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>URL de Imagen</label>
+                    <input id="imagen" type="text" placeholder="https://ejemplo.com/imagen.jpg" required>
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button id="btn-cancelar" type="button" class="btn btn-danger">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="./categories.ts"></script>
+</body>
+</html>

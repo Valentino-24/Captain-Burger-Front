@@ -9,6 +9,8 @@ export default defineConfig({
         login: resolve(__dirname, "src/pages/auth/login/login.html"),
         adminHome: resolve(__dirname, "src/pages/admin/home/home.html"),
         clientHome: resolve(__dirname, "src/pages/client/home/home.html"),
+        categories: resolve(__dirname, "src/pages/admin/categories/categories.html"),
+        products: resolve(__dirname, "src/pages/admin/products/products.html"),
       },
     },
   },
