@@ -1,57 +1,26 @@
-// IMPORTAMOS LOS MOLDES
+// src/pages/admin/products/products.ts
 import type { IProducto } from "../../../types/IProducto";
 import type { ICategoria } from "../../../types/ICategoria";
+import { getProductos, crearProducto, actualizarProducto, borrarProducto, getCategorias } from "../../../utils/api";
 
-// NUESTRAS "BASES DE DATOS FALSAS" (SIMULADAS)
-
-// BD Falsa de Categorías (para rellenar el <select>)
-// (En un sistema real, esto vendría de un fetch a /api/categorias)
-const categorias: ICategoria[] = [
+// BD Falsa de Categorías como fallback (si el backend no responde)
+const categoriasFallback: ICategoria[] = [
     { id: 1, nombre: "Hamburguesas", descripcion: "", imagen: "" },
     { id: 2, nombre: "Pizzas", descripcion: "", imagen: "" },
     { id: 3, nombre: "Papas", descripcion: "", imagen: "" }
 ];
 
-// BD Falsa de Productos
-let productos: IProducto[] = [
-    {
-        id: 101,
-        nombre: "Burger Clásica",
-        descripcion: "Medallón 120g, cheddar, lechuga y tomate.",
-        precio: 8500,
-        stock: 50,
-        categoriaId: 1,
-        imagen: "url-burger-clasica.jpg",
-        disponible: true
-    },
-    {
-        id: 102,
-        nombre: "Pizza Muzzarella",
-        descripcion: "Salasa de tomate, muzzarella y orégano",
-        precio: 11000,
-        stock: 30,
-        categoriaId: 2,
-        imagen: "url-pizza-muzzarella.jpg",
-        disponible: true
-    }
-];
+// Estado local (se llenará desde el backend)
+let productos: IProducto[] = [];
 
 // SELECCIÓN DE ELEMENTOS DEL DOM
-
-// Botones
 const btnNuevoProducto = document.getElementById("btn-nuevo-producto") as HTMLButtonElement;
 const btnCancelar = document.getElementById("btn-cancelar") as HTMLButtonElement;
 const btnCerrarModalProducto = document.getElementById("btn-cerrar-modal-producto") as HTMLSpanElement;
-
-// Tabla
 const tablaProductosBody = document.getElementById("tabla-productos-body") as HTMLTableSectionElement;
-
-// Modal y Formulario
 const modalProducto = document.getElementById("modal-producto") as HTMLDivElement;
 const formProducto = document.getElementById("form-producto") as HTMLFormElement;
 const modalTitulo = document.getElementById("modal-titulo") as HTMLHeadingElement;
-
-// Campos del Formulario
 const productoIdInput = document.getElementById("producto-id") as HTMLInputElement;
 const nombreInput = document.getElementById("nombre") as HTMLInputElement;
 const descripcionInput = document.getElementById("descripcion") as HTMLInputElement;
@@ -61,14 +30,38 @@ const categoriaSelect = document.getElementById("categoria") as HTMLSelectElemen
 const imagenInput = document.getElementById("imagen") as HTMLInputElement;
 const disponibleInput = document.getElementById("disponible") as HTMLInputElement;
 
-// (Aquí irá toda la lógica del CRUD)
+// Helper: mapeo DTO backend <-> IProducto front
+const dtoToIProducto = (dto: any): IProducto => {
+    return {
+        id: dto.id,
+        nombre: dto.nombre,
+        descripcion: dto.descripcion || '',
+        precio: dto.precio ?? 0,
+        stock: 0, // no se persiste por ahora
+        categoriaId: dto.categoriaId ?? null,
+        imagen: dto.imagenURL ?? '',
+        disponible: true // no se persiste por ahora
+    } as IProducto;
+};
 
-// Rellena el <select> de categorías en el formulario.
-// Lee el array 'categorias' y crea un <option> por cada una.
-const renderCategoriasDropdown = () => {
+const iProductoToDto = (p: IProducto) => {
+    return {
+        id: p.id,
+        nombre: p.nombre,
+        descripcion: p.descripcion,
+        precio: p.precio,
+        categoriaId: p.categoriaId ?? null,
+        imagenURL: p.imagen
+    };
+};
 
-    categorias.forEach(categoria => {
-
+// Rellena el <select> de categorías (intenta backend, si falla usa fallback)
+const renderCategoriasDropdown = async () => {
+    categoriaSelect.innerHTML = '';
+    // Intentamos obtener del backend
+    const categoriasFromBackend = await getCategorias().catch(() => null);
+    const lista = categoriasFromBackend ?? categoriasFallback;
+    lista.forEach((categoria: ICategoria) => {
         const option = document.createElement('option');
         option.value = categoria.id.toString();
         option.textContent = categoria.nombre;
@@ -76,27 +69,21 @@ const renderCategoriasDropdown = () => {
     });
 };
 
-// Busca el nombre de una categoría usando su ID.
-const getCategoriaNombre = (id: number): string => {
-    const categoria = categorias.find(cat => cat.id === id);
-    return categoria ? categoria.nombre : "Desconocida";
-};
-
 // Dibuja la tabla de productos en el HTML.
-// Lee el array 'productos' y crea una fila <tr> por cada uno.
 const renderProductos = () => {
     tablaProductosBody.innerHTML = '';
 
     productos.forEach(producto => {
-
         const tr = document.createElement('tr');
 
         tr.innerHTML = `
         <td>${producto.id}</td>
+        <td><img src="${producto.imagen}" class="img-product"></td>
         <td>${producto.nombre}</td>
+        <td>${producto.descripcion}</td>
         <td>$${producto.precio}</td>
-        <td>${producto.stock}</td>
         <td>${getCategoriaNombre(producto.categoriaId)}</td>
+        <td>${producto.stock ?? 0}</td>
         <td>${producto.disponible ? 'Sí' : 'No'}</td>
         <td>
             <button class="btn-editar" data-id="${producto.id}">Editar</button>
@@ -107,184 +94,133 @@ const renderProductos = () => {
         tablaProductosBody.appendChild(tr);
     });
 
-    // Agregamos Event Listeners a los botones de ELIMINAR
-    const botonesEliminar = document.querySelectorAll('.btn-eliminar');
-
-    botonesEliminar.forEach(boton => {
-        boton.addEventListener('click', () => {
-
+    // Event Listeners
+    document.querySelectorAll('.btn-eliminar').forEach(boton => {
+        boton.addEventListener('click', async () => {
             const id = (boton as HTMLElement).dataset.id;
-            if (id) {
-                handleDeleteProducto(parseInt(id));
+            if (id && confirm(`¿Estás seguro que querés eliminar el producto con ID ${id}?`)) {
+                try {
+                    await borrarProducto(parseInt(id));
+                    await cargarProductosDesdeBackend();
+                } catch (err) {
+                    console.error('Error al eliminar producto:', err);
+                    alert('No se pudo eliminar el producto');
+                }
             }
         });
     });
 
-    // Agregamos Event Listeners a los botones de EDITAR
-    const botonesEditar = document.querySelectorAll('.btn-editar');
-
-    botonesEditar.forEach(boton => {
+    document.querySelectorAll('.btn-editar').forEach(boton => {
         boton.addEventListener('click', () => {
-
             const id = (boton as HTMLElement).dataset.id;
             if (id) {
                 handleEditProducto(parseInt(id));
             }
         });
     });
-
 };
 
-// Muestra el modal de formulario de producto.
+// Busca el nombre de una categoría usando su ID (usa el select actual)
+const getCategoriaNombre = (id: number | null) => {
+    if (!id) return 'Desconocida';
+    const option = categoriaSelect.querySelector(`option[value="${id}"]`) as HTMLOptionElement;
+    return option ? option.textContent || 'Desconocida' : 'Desconocida';
+};
+
+// Mostrar / ocultar modal
 const showModal = (title: string) => {
     modalTitulo.textContent = title;
     modalProducto.classList.remove('hidden');
 };
-
-// Oculta el modal de formulario de producto.
 const hideModal = () => {
     modalProducto.classList.add('hidden');
     formProducto.reset();
     productoIdInput.value = '';
-}
+};
 
-// Maneja la lógica para eliminar un producto.
-const handleDeleteProducto = (id: number) => {
-
-    if (confirm(`¿Estás seguro que querés eliminar el producto con ID ${id}?`)) {
-
-        // Filtramos el array: nos quedamos con todos MENOS el que tiene ese ID.
-        productos = productos.filter(producto => producto.id !== id);
-
-        // 3. Volvemos a "dibujar" la tabla (que ahora tiene un ítem menos)
+// Cargar datos desde backend y popular productos[]
+const cargarProductosDesdeBackend = async () => {
+    try {
+        const dtos = await getProductos();
+        productos = (dtos ?? []).map((d: any) => dtoToIProducto(d));
+        renderProductos();
+    } catch (err) {
+        console.error('Error al cargar productos desde backend:', err);
+        alert('No se pudo obtener la lista de productos del servidor. Reintentá más tarde.');
+        // opcional: dejar productos vacíos o mantener fallback local
+        productos = [];
         renderProductos();
     }
 };
 
-// Maneja la lógica para cargar los datos de un producto en el modal.
+// Manejo editar (carga producto en form)
 const handleEditProducto = (id: number) => {
-
-    // Buscamos el producto en nuestra "base de datos falsa"
     const producto = productos.find(p => p.id === id);
-
-    // Si no lo encontramos, no hacemos nada
     if (!producto) return;
-
-    // Rellenamos el formulario con los datos del producto
-    productoIdInput.value = producto.id.toString(); // Guardamos el ID en el campo oculto
+    productoIdInput.value = producto.id.toString();
     nombreInput.value = producto.nombre;
     descripcionInput.value = producto.descripcion;
     precioInput.value = producto.precio.toString();
-    stockInput.value = producto.stock.toString();
-    categoriaSelect.value = producto.categoriaId.toString();
+    stockInput.value = producto.stock?.toString() ?? '0';
+    categoriaSelect.value = producto.categoriaId?.toString() ?? '';
     imagenInput.value = producto.imagen;
     disponibleInput.checked = producto.disponible;
-
-    // Mostramos el modal con el título "Editar Producto"
     showModal('Editar Producto');
 };
 
+// INICIO
+(async () => {
+    await renderCategoriasDropdown();
+    await cargarProductosDesdeBackend();
+})();
 
-// --- INICIO DE LA APP ---
-
-// 1. Al cargar la página, llenamos el dropdown y la tabla
-renderCategoriasDropdown();
-renderProductos();
-
-// 2. Al hacer clic en "Nuevo Producto"
+// Eventos UI
 btnNuevoProducto.addEventListener('click', () => {
     formProducto.reset();
     productoIdInput.value = '';
     showModal('Nuevo Producto');
 });
+btnCancelar.addEventListener('click', hideModal);
+btnCerrarModalProducto.addEventListener('click', hideModal);
 
-// 3. Al hacer clic en "Cancelar"
-btnCancelar.addEventListener('click', () => {
-    hideModal();
-});
-
-// 3b. Al hacer clic en la "X" del modal
-btnCerrarModalProducto.addEventListener('click', () => {
-    hideModal();
-});
-
-// 4. Al ENVIAR el formulario (Crear o Editar)
-formProducto.addEventListener('submit', (event) => {
+formProducto.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    // Obtenemos los valores de los inputs
     const idString = productoIdInput.value;
-    const nombre = nombreInput.value;
-    const descripcion = descripcionInput.value;
-
-    // Convertimos precio y stock a NÚMERO
+    const nombre = nombreInput.value.trim();
+    const descripcion = descripcionInput.value.trim();
     const precio = parseFloat(precioInput.value);
-    const stock = parseInt(stockInput.value);
-
-    // Obtenemos el ID de la categoría (que es el 'value' del <select>)
     const categoriaId = parseInt(categoriaSelect.value);
-    const imagen = imagenInput.value;
+    const imagen = imagenInput.value.trim();
 
-    // Para un checkbox, se usa '.checked' (devuelve true o false)
-    const disponible = disponibleInput.checked;
-
-    // Validamos que los campos no estén vacíos
-    if (!nombre || !descripcion || !precioInput.value || !stockInput.value || !categoriaId || !imagen) {
-        alert("Por favor, completá todos los campos.");
+    if (!nombre || !descripcion || isNaN(precio) || !categoriaId || !imagen) {
+        alert("Por favor, completá todos los campos obligatorios.");
         return;
     }
 
-    // === LÓGICA DEL CRUD ===
+    const dtoPayload = {
+        nombre,
+        descripcion,
+        precio,
+        categoriaId,
+        imagenURL: imagen
+    };
 
-    if (!idString) {
-
-        // 1. Creamos el nuevo objeto Producto
-        const nuevoProducto: IProducto = {
-            id: Date.now(),
-            nombre: nombre,
-            descripcion: descripcion,
-            precio: precio,
-            stock: stock,
-            categoriaId: categoriaId,
-            imagen: imagen,
-            disponible: disponible
-        };
-
-        // 2. Agregamos el producto a nuestra "base de datos falsa"
-        productos.push(nuevoProducto);
-
-        console.log('Producto creado', productos);
-
-    } else {
-
-        // Si el 'id' SÍ EXISTE, estamos EDITANDO
-
-        // 1. Convertimos el ID de string a número
-        const id = parseInt(idString);
-
-        // 2. Buscamos el producto en nuestro array
-        const productoAEditar = productos.find(p => p.id === id);
-
-        // 3. Si lo encontramos, actualizamos sus datos
-        if (productoAEditar) {
-            productoAEditar.nombre = nombre;
-            productoAEditar.descripcion = descripcion;
-            productoAEditar.precio = precio;
-            productoAEditar.stock = stock;
-            productoAEditar.categoriaId = categoriaId;
-            productoAEditar.imagen = imagen;
-            productoAEditar.disponible = disponible;
-            console.log('Producto editado:', productos);
+    try {
+        if (!idString) {
+            // Crear
+            await crearProducto(dtoPayload);
+        } else {
+            // Actualizar
+            const id = parseInt(idString);
+            await actualizarProducto(id, dtoPayload);
         }
+        await cargarProductosDesdeBackend();
+        hideModal();
+    } catch (err) {
+        console.error('Error al guardar producto:', err);
+        alert('Ocurrió un error guardando el producto.');
     }
-
-    // 3. Volvemos a "dibujar" la tabla con los datos actualizados
-    renderProductos();
-
-    // 4. Cerramos el modal
-    hideModal();
-
 });
 
-// El 'export {}' para que no choquen las variables
 export {};

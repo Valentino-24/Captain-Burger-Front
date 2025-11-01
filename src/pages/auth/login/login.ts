@@ -20,10 +20,15 @@ loginForm.addEventListener("submit", (e: SubmitEvent) => {
   const user: IUser = {
   nombre:"",
   email,
-  password,
-};
+  password
+  };
 
 inicioSesion(user);
+
+let storedUser = localStorage.getItem('userData');
+
+user.rol = storedUser ? JSON.parse(storedUser).rol : null;
+
 alert(user.rol);
 if (user.rol == "ADMIN") {
     navigate("/src/pages/admin/home/home.html");

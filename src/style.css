@@ -233,6 +233,34 @@ body {
     font-size: 18px;
 }
 
+.img-product {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.btn-editar {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    mar
+}
+
+.btn-eliminar {
+    background-color: #F44336;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
 /* Resumen del Pedido */
 .order-summary {
     background: white;
