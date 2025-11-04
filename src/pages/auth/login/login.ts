@@ -1,7 +1,7 @@
 import type { IUser } from "../../../types/IUser";
 import { inicioSesion, logoutUser } from "../../../utils/localStorage";
 
-logoutUser(); // Asegura que el usuario esté deslogueado al cargar la página
+//logoutUser(); // Asegura que el usuario esté deslogueado al cargar la página
 
 const loginForm = document.getElementById("form") as HTMLFormElement;
 const emailInput = document.getElementById("email") as HTMLInputElement;

@@ -22,7 +22,7 @@
         let u = JSON.parse(localStorage.getItem('userData') as string);
         alert('Rol: ' + u.rol);
         if (u.rol === "ADMIN") {
-          navigate("src/pages/admin/products/products.html");
+          navigate("/src/pages/admin/products/products.html");
         } else if (u.rol === "USUARIO") {
           navigate("/src/pages/client/home/home.html");
         }

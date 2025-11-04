@@ -2,9 +2,12 @@
 import type { IProducto } from "../../../types/IProducto";
 import type { ICategoria } from "../../../types/ICategoria";
 import { getProductos, crearProducto, actualizarProducto, borrarProducto, getCategorias } from "../../../utils/api";
+import { checkAuthUser } from "../../../utils/auth";
 
 // Estado local (se llenará desde el backend)
 let productos: IProducto[] = [];
+
+checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
 
 // SELECCIÓN DE ELEMENTOS DEL DOM
 const btnNuevoProducto = document.getElementById("btn-nuevo-producto") as HTMLButtonElement;
