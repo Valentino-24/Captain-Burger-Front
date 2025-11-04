@@ -1,5 +1,6 @@
 import { checkAuthUser } from "../../../utils/auth";
 import { logoutUser } from "../../../utils/localStorage";
+import { navigate } from "../../../utils/navigate";
 
 const buttonLogout = document.getElementById(
   "button_logout"
@@ -7,6 +8,7 @@ const buttonLogout = document.getElementById(
 
 buttonLogout.addEventListener("click", () => {
   logoutUser();
+  navigate("/src/pages/auth/login/login.html");
 });
 
 const initPage = () => {

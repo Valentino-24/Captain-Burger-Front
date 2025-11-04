@@ -1,206 +1,158 @@
 import type { ICategoria } from "../../../types/ICategoria";
+import { getCategorias, crearCategoria, actualizarCategoria, borrarCategoria } from "../../../utils/api";
 
-let categorias: ICategoria[] = [
-    {
-        id: 1,
-        nombre: "Hamburguesas",
-        descripcion: "Las mejores hamburguesas artesanales.",
-        imagen: "url-de-imagen-burger.jpg"
-    },
-    {
-        id: 2,
-        nombre: "Pizzas",
-        descripcion: "Pizzas a la pidra con muzzarella de calidad.",
-        imagen: "url-de-imagen-pizza.jpg"
-    }
-];
 
-// Botones Principales
+//checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
+
+// Elementos DOM
 const btnNuevaCategoria = document.getElementById("btn-nueva-categoria") as HTMLButtonElement;
 const btnCancelar = document.getElementById("btn-cancelar") as HTMLButtonElement;
 const btnCerrarModal = document.getElementById("btn-cerrar-modal") as HTMLSpanElement;
-
-// Tabla
 const tablaCategoriasBody = document.getElementById("tabla-categorias-body") as HTMLTableSectionElement;
-
-// Modal y Formulario
 const modalCategoria = document.getElementById("modal-categoria") as HTMLDivElement;
 const formCategoria = document.getElementById("form-categoria") as HTMLFormElement;
 const modalTitulo = document.getElementById("modal-titulo") as HTMLHeadingElement;
-
-// Campos del Formulario
 const categoriaIdInput = document.getElementById("categoria-id") as HTMLInputElement;
 const nombreInput = document.getElementById("nombre") as HTMLInputElement;
 const descripcionInput = document.getElementById("descripcion") as HTMLInputElement;
-const imagenInput = document.getElementById("imagen") as HTMLInputElement;
 
-// (Aquí irá toda la lógica del CRUD)
 
-/**
- * Dibuja la tabla de categorías en el HTML.
- * Lee el array 'categorias' y crea una fila <tr> por cada una.
- */
-const renderCategorias = () => {
+let categorias: ICategoria[] = [];
 
-    tablaCategoriasBody.innerHTML = '';
-
-    categorias.forEach(categoria => {
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-        <td>${categoria.id}</td>
-        <td>${categoria.nombre}</td>
-        <td>${categoria.descripcion}</td>
-        <td>
-            <button class="btn-editar" data-id="${categoria.id}">Editar</button>
-            <button class="btn-eliminar" data-id="${categoria.id}">Eliminar</button>
-        </td>
-        `;
-
-        tablaCategoriasBody.appendChild(tr);
-    });
-
-    // Agregamos Event Listeners a los botones de ELIMINAR
-    const botonesEliminar = document.querySelectorAll('.btn-eliminar');
-
-    botonesEliminar.forEach(boton => {
-        boton.addEventListener('click', () => {
-            const id = (boton as HTMLElement).dataset.id;
-
-            if (id) {
-                handleDelete(parseInt(id));
-            }
-        });
-    });
-
-    // Agregamos Event Listeners a los botones de EDITAR
-    const botonesEditar = document.querySelectorAll('.btn-editar');
-
-    botonesEditar.forEach(boton => {
-        boton.addEventListener('click', () => {
-            const id = (boton as HTMLElement).dataset.id;
-
-            if (id) {
-                handleEdit(parseInt(id));
-            }
-        });
-    });
-};
 
 const showModal = (title: string) => {
-    modalTitulo.textContent = title;
-    modalCategoria.classList.remove('hidden');
+  modalTitulo.textContent = title;
+  modalCategoria.classList.remove('hidden');
 };
 
 const hideModal = () => {
-    modalCategoria.classList.add('hidden');
-    formCategoria.reset();
-    categoriaIdInput.value = '';
+  modalCategoria.classList.add('hidden');
+  formCategoria.reset();
+  categoriaIdInput.value = '';
 };
 
-// Maneja la lógica para eliminar una categoría.
+const renderCategorias = () => {
+  tablaCategoriasBody.innerHTML = '';
 
-const handleDelete = (id: number) => {
-    if (confirm(`¿Estás seguro que querés eliminar la categoría con ID ${id}?`)) {
+  categorias.forEach(categoria => {
+    const tr = document.createElement('tr');
 
-        categorias = categorias.filter(categoria => categoria.id !== id);
+    tr.innerHTML = `
+      <td>${categoria.id}</td>
+      <td>${categoria.nombre}</td>
+      <td>${categoria.descripcion ?? ''}</td>
+      <td>
+        <button class="btn-editar" data-id="${categoria.id}">Editar</button>
+        <button class="btn-eliminar" data-id="${categoria.id}">Eliminar</button>
+      </td>
+    `;
 
-        renderCategorias();
-    }
+    tablaCategoriasBody.appendChild(tr);
+  });
+
+  // eliminar
+  document.querySelectorAll('.btn-eliminar').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      const id = (boton as HTMLElement).dataset.id;
+      if (!id) return;
+      if (!confirm(`¿Estás seguro que querés eliminar la categoría con ID ${id}?`)) return;
+
+      try {
+        await borrarCategoria(parseInt(id));
+        await cargarCategoriasDesdeBackend();
+      } catch (err) {
+        console.error('Error al eliminar categoría:', err);
+        alert('No se pudo eliminar la categoría. Revisa la consola.');
+      }
+    });
+  });
+
+  // editar
+  document.querySelectorAll('.btn-editar').forEach(boton => {
+    boton.addEventListener('click', () => {
+      const id = (boton as HTMLElement).dataset.id;
+      if (!id) return;
+      handleEdit(parseInt(id));
+    });
+  });
 };
 
-// Maneja la lógica para cargar los datos de una categoría en el modal.
+/* ---------- CRUD Backend ---------- */
+
+const cargarCategoriasDesdeBackend = async () => {
+  try {
+    const dtos = await getCategorias();
+    categorias = (dtos ?? []).map((d: any) => ({
+      id: d.id,
+      nombre: d.nombre,
+      descripcion: d.descripcion ?? ''
+    } as ICategoria));
+    renderCategorias();
+  } catch (err) {
+    console.error('Error al cargar categorías desde backend:', err);
+    alert('No se pudieron cargar las categorías. Reintentá más tarde.');
+    categorias = [];
+    renderCategorias();
+  }
+};
 
 const handleEdit = (id: number) => {
-
-    // 1. Buscamos la categoría en nuestra "base de datos falsa"
-    const categoria = categorias.find(cat => cat.id === id);
-
-    // Si no la encontramos (por si acaso), no hacemos nada
-    if (!categoria) return;
-
-    // 2. Rellenamos el formulario con los datos de la categoría
-    categoriaIdInput.value = categoria.id.toString(); // Guardamos el ID en el campo oculto
-    nombreInput.value = categoria.nombre;
-    descripcionInput.value = categoria.descripcion;
-    imagenInput.value = categoria.imagen;
-
-    // 3. Mostramos el modal con el título "Editar Categoría"
-    showModal('Editar Categoría');
+  const categoria = categorias.find(c => c.id === id);
+  if (!categoria) return;
+  categoriaIdInput.value = String(categoria.id);
+  nombreInput.value = categoria.nombre;
+  descripcionInput.value = categoria.descripcion ?? '';
+  showModal('Editar Categoría');
 };
 
-// --- INICIO DE LA APP ---
 
-// 1. Al cargar la página, dibujamos la tabla
-renderCategorias();
-
-// 2. Al hacer clic en "Nueva Categoría"
 btnNuevaCategoria.addEventListener('click', () => {
-    showModal('Nueva Categoría');
+  formCategoria.reset();
+  categoriaIdInput.value = '';
+  showModal('Nueva Categoría');
 });
 
-// 3. Al hacer clic en "Cancelar"
-btnCancelar.addEventListener('click', () => {
-    hideModal();
-});
+btnCancelar.addEventListener('click', hideModal);
+btnCerrarModal.addEventListener('click', hideModal);
 
-// 3b. Al hacer clic en la "X" del modal
-btnCerrarModal.addEventListener('click', () => {
-    hideModal();
-});
+// Envío del formulario: crear o editar
+formCategoria.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-// 4. Al ENVIAR el formulario (Crear o Editar)
-formCategoria.addEventListener('submit', (event) => {
-    event.preventDefault();
+  const idString = categoriaIdInput.value;
+  const nombre = nombreInput.value.trim();
+  const descripcion = descripcionInput.value.trim();
 
-    const idString = categoriaIdInput.value;
-    const nombre = nombreInput.value;
-    const descripcion = descripcionInput.value;
-    const imagen = imagenInput.value;
+  if (!nombre) {
+    alert('El nombre es obligatorio.');
+    return;
+  }
 
-    if (!nombre || !descripcion || !imagen) {
-        alert("Por favor, completá todos los campos.");
-        return;
-    }
+  const payload = { nombre, descripcion };
 
-    // === LÓGICA DEL CRUD ===
-    // Por ahora, solo manejamos el caso de "Crear".
-    // Si el 'id' oculto está vacío, es una categoría NUEVA.
-
+  try {
     if (!idString) {
-        const nuevaCategoria: ICategoria = {
-            id: Date.now(),
-            nombre: nombre,
-            descripcion: descripcion,
-            imagen: imagen,
-        };
-
-        categorias.push(nuevaCategoria);
-
-        console.log('Categoría creada:', categorias);
-
+      // Crear
+      await crearCategoria(payload);
     } else {
-        // (Aquí irá la lógica de "Editar")
-        // Si el 'id' SÍ EXISTE, estamos EDITANDO
-        
-        // 1. Convertimos el ID de string a número
-        const id = parseInt(idString);
-
-        // 2. Buscamos la categoría en nuestro array
-        const categoriaAEditar = categorias.find(cat => cat.id === id);
-
-        // 3. Si la encontramos, actualizamos sus datos
-        if (categoriaAEditar) {
-            categoriaAEditar.nombre = nombre;
-            categoriaAEditar.descripcion = descripcion;
-            categoriaAEditar.imagen = imagen;
-            console.log('Categoría editada', categorias);
-        }
+      // Editar
+      const id = parseInt(idString);
+      await actualizarCategoria(id, payload);
     }
-
-    renderCategorias();
-
+    await cargarCategoriasDesdeBackend();
     hideModal();
+  } catch (err) {
+    console.error('Error guardando categoría:', err);
+    alert('Ocurrió un error al guardar la categoría.');
+  }
 });
 
+/* ---------- Inicio ---------- */
+
+(async () => {
+  // Si no pasan la auth, checkAuthUser ya redirigió
+  await cargarCategoriasDesdeBackend();
+})();
+
+// Export vacío para evitar conflictos de scope
 export {};

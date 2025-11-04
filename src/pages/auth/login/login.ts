@@ -1,6 +1,7 @@
 import type { IUser } from "../../../types/IUser";
-import { inicioSesion } from "../../../utils/localStorage";
-import { navigate } from "../../../utils/navigate";
+import { inicioSesion, logoutUser } from "../../../utils/localStorage";
+
+logoutUser(); // Asegura que el usuario esté deslogueado al cargar la página
 
 const loginForm = document.getElementById("form") as HTMLFormElement;
 const emailInput = document.getElementById("email") as HTMLInputElement;
@@ -18,21 +19,10 @@ loginForm.addEventListener("submit", (e: SubmitEvent) => {
   }
 
   const user: IUser = {
-  nombre:"",
+  nombre: "",
   email,
   password
   };
 
 inicioSesion(user);
-
-let storedUser = localStorage.getItem('userData');
-
-user.rol = storedUser ? JSON.parse(storedUser).rol : null;
-
-alert(user.rol);
-if (user.rol == "ADMIN") {
-    navigate("/src/pages/admin/home/home.html");
-  } else if (user.rol == "USUARIO") {
-    navigate("/src/pages/client/home/home.html");
-  }
 });

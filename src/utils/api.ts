@@ -8,7 +8,7 @@ async function handleResponse(res: Response) {
   return res.status === 204 ? null : res.json();
 }
 
-/* ---------- USUARIOS (existente) ---------- */
+/* ---------- USUARIOS ---------- */
 export const crearUsuario = async (usuarioData: {
   nombre?: string;
   email?: string;
@@ -48,11 +48,6 @@ export const loginUsuario = async (email: string, password: string) => {
 };
 
 /* ---------- PRODUCTOS ---------- */
-/**
- * Nota: el backend usa ProductoDTO { id, nombre, descripcion, precio, categoriaId, imagenURL }
- * En el front usamos IProducto { id, nombre, descripcion, precio, stock?, categoriaId, imagen, disponible? }
- * Mapeamos imagen <-> imagenURL y ignoramos stock/disponible (según lo solicitado).
- */
 
 export const getProductos = async () => {
   try {
@@ -78,6 +73,7 @@ export const crearProducto = async (productoDto: {
   nombre: string;
   descripcion?: string;
   precio: number;
+  stock:number;
   categoriaId?: number | null;
   imagenURL?: string;
 }) => {
@@ -100,6 +96,7 @@ export const actualizarProducto = async (
     nombre: string;
     descripcion?: string;
     precio: number;
+    stock:number;
     categoriaId?: number | null;
     imagenURL?: string;
   }
@@ -127,14 +124,68 @@ export const borrarProducto = async (id: number) => {
   }
 };
 
-/* ---------- CATEGORIAS (opcional, si existe el endpoint) ---------- */
+/* ---------- CATEGORIAS ---------- */
+
 export const getCategorias = async () => {
   try {
     const res = await fetch(`${API_URL}/categorias`, { method: 'GET' });
     return await handleResponse(res);
   } catch (err) {
-    // No hacer crash si no existe el endpoint: el front puede usar la lista local de fallback
     console.warn('No se pudo obtener categorías desde backend:', err);
     return null;
+  }
+};
+
+export const getCategoria = async (id: number) => {
+  try {
+    const res = await fetch(`${API_URL}/categorias/${id}`, { method: 'GET' });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al obtener categoría:', err);
+    throw err;
+  }
+};
+
+export const crearCategoria = async (categoriaDto: {
+  nombre: string;
+  descripcion?: string;
+}) => {
+  try {
+    const res = await fetch(`${API_URL}/categorias`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoriaDto),
+    });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al crear categoría:', err);
+    throw err;
+  }
+};
+
+export const actualizarCategoria = async (id: number, categoriaDto: {
+  nombre: string;
+  descripcion?: string;
+}) => {
+  try {
+    const res = await fetch(`${API_URL}/categorias/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(categoriaDto),
+    });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al actualizar categoría:', err);
+    throw err;
+  }
+};
+
+export const borrarCategoria = async (id: number) => {
+  try {
+    const res = await fetch(`${API_URL}/categorias/${id}`, { method: 'DELETE' });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al eliminar categoría:', err);
+    throw err;
   }
 };

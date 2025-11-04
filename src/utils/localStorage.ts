@@ -1,7 +1,6 @@
   import type { IUser } from "../types/IUser";
   import { navigate } from "./navigate";
   import { crearUsuario, loginUsuario } from "./api";
-  import { checkAuthUser } from "./auth";
 
   export const saveUser = (userData: IUser) => {
 
@@ -20,7 +19,13 @@
     loginUsuario(userData.email, userData.password)
       .then((data) => {
         localStorage.setItem('userData', JSON.stringify(data));
-        checkAuthUser("USUARIO", "/src/pages/client/home/home.html");
+        let u = JSON.parse(localStorage.getItem('userData') as string);
+        alert('Rol: ' + u.rol);
+        if (u.rol === "ADMIN") {
+          navigate("src/pages/admin/products/products.html");
+        } else if (u.rol === "USUARIO") {
+          navigate("/src/pages/client/home/home.html");
+        }
       })
       .catch((err) => {
         console.error('❌ Error al iniciar sesión:', err);
@@ -31,5 +36,4 @@
 
   export const logoutUser = () => {
     localStorage.removeItem("userData");
-    navigate("/src/pages/auth/login/login.html");
   };

@@ -3,13 +3,6 @@ import type { IProducto } from "../../../types/IProducto";
 import type { ICategoria } from "../../../types/ICategoria";
 import { getProductos, crearProducto, actualizarProducto, borrarProducto, getCategorias } from "../../../utils/api";
 
-// BD Falsa de Categorías como fallback (si el backend no responde)
-const categoriasFallback: ICategoria[] = [
-    { id: 1, nombre: "Hamburguesas", descripcion: "", imagen: "" },
-    { id: 2, nombre: "Pizzas", descripcion: "", imagen: "" },
-    { id: 3, nombre: "Papas", descripcion: "", imagen: "" }
-];
-
 // Estado local (se llenará desde el backend)
 let productos: IProducto[] = [];
 
@@ -37,22 +30,11 @@ const dtoToIProducto = (dto: any): IProducto => {
         nombre: dto.nombre,
         descripcion: dto.descripcion || '',
         precio: dto.precio ?? 0,
-        stock: 0, // no se persiste por ahora
+        stock: dto.stock,
         categoriaId: dto.categoriaId ?? null,
         imagen: dto.imagenURL ?? '',
         disponible: true // no se persiste por ahora
     } as IProducto;
-};
-
-const iProductoToDto = (p: IProducto) => {
-    return {
-        id: p.id,
-        nombre: p.nombre,
-        descripcion: p.descripcion,
-        precio: p.precio,
-        categoriaId: p.categoriaId ?? null,
-        imagenURL: p.imagen
-    };
 };
 
 // Rellena el <select> de categorías (intenta backend, si falla usa fallback)
@@ -60,7 +42,7 @@ const renderCategoriasDropdown = async () => {
     categoriaSelect.innerHTML = '';
     // Intentamos obtener del backend
     const categoriasFromBackend = await getCategorias().catch(() => null);
-    const lista = categoriasFromBackend ?? categoriasFallback;
+    const lista = categoriasFromBackend;
     lista.forEach((categoria: ICategoria) => {
         const option = document.createElement('option');
         option.value = categoria.id.toString();
@@ -83,7 +65,7 @@ const renderProductos = () => {
         <td>${producto.descripcion}</td>
         <td>$${producto.precio}</td>
         <td>${getCategoriaNombre(producto.categoriaId)}</td>
-        <td>${producto.stock ?? 0}</td>
+        <td>${producto.stock}</td>
         <td>${producto.disponible ? 'Sí' : 'No'}</td>
         <td>
             <button class="btn-editar" data-id="${producto.id}">Editar</button>
@@ -190,6 +172,7 @@ formProducto.addEventListener('submit', async (event) => {
     const nombre = nombreInput.value.trim();
     const descripcion = descripcionInput.value.trim();
     const precio = parseFloat(precioInput.value);
+    const stock = parseInt(stockInput.value);
     const categoriaId = parseInt(categoriaSelect.value);
     const imagen = imagenInput.value.trim();
 
@@ -202,6 +185,7 @@ formProducto.addEventListener('submit', async (event) => {
         nombre,
         descripcion,
         precio,
+        stock,
         categoriaId,
         imagenURL: imagen
     };
@@ -222,5 +206,4 @@ formProducto.addEventListener('submit', async (event) => {
         alert('Ocurrió un error guardando el producto.');
     }
 });
-
 export {};
