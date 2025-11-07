@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Store - Mis Pedidos</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">🍔 Food Store</div>
+        <div class="user-info">
+            <a href="/src/pages/store/home/home.html">← Volver a la Tienda</a>
+            <a href="/src/pages/store/cart/cart.html">🛒 Carrito</a>
+            <button id="button_logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="orders-container">
+        <h1>Mis Pedidos</h1>
+
+        <!-- Loading -->
+        <div id="loading" class="loading" style="display: none;">
+            <p>Cargando pedidos...</p>
+        </div>
+
+        <!-- Estado vacío -->
+        <div id="empty-orders" class="empty-state" style="display: none;">
+            <p>Aún no has realizado ningún pedido</p>
+            <a href="/src/pages/store/home/home.html" class="btn btn-primary">Ir a la Tienda</a>
+        </div>
+
+        <!-- Lista de pedidos -->
+        <div id="orders-list" class="orders-list">
+            <!-- Los pedidos se cargan dinámicamente -->
+        </div>
+    </main>
+
+    <!-- Modal de Detalle del Pedido -->
+    <div id="modal-detalle" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <span class="modal-close">&times;</span>
+            <h2>Detalle del Pedido #<span id="modal-pedido-numero"></span></h2>
+            
+            <div class="pedido-detalle">
+                <!-- Estado del pedido -->
+                <div class="pedido-estado-section">
+                    <div class="estado-icon" id="modal-estado-icon">⏳</div>
+                    <div class="estado-info">
+                        <h3>Estado: <span id="modal-estado-badge" class="badge"></span></h3>
+                        <p id="modal-estado-mensaje" class="estado-mensaje"></p>
+                    </div>
+                </div>
+
+                <!-- Información de entrega -->
+                <div class="info-section">
+                    <h3>Información de Entrega</h3>
+                    <p><strong>Dirección:</strong> <span id="modal-direccion"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="modal-telefono"></span></p>
+                    <p><strong>Método de pago:</strong> <span id="modal-metodo-pago"></span></p>
+                    <p id="modal-notas-container" style="display: none;">
+                        <strong>Notas:</strong> <span id="modal-notas"></span>
+                    </p>
+                </div>
+
+                <!-- Productos del pedido -->
+                <div class="productos-section">
+                    <h3>Productos</h3>
+                    <div id="modal-productos-list" class="productos-list">
+                        <!-- Los productos se cargan dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Resumen de costos -->
+                <div class="resumen-section">
+                    <div class="resumen-line">
+                        <span>Subtotal:</span>
+                        <span id="modal-subtotal">$0</span>
+                    </div>
+                    <div class="resumen-line">
+                        <span>Envío:</span>
+                        <span id="modal-envio">$500</span>
+                    </div>
+                    <div class="resumen-line total">
+                        <span>Total:</span>
+                        <span id="modal-total">$0</span>
+                    </div>
+                </div>
+
+                <!-- Fecha del pedido -->
+                <div class="fecha-section">
+                    <p class="text-muted">
+                        Pedido realizado el <span id="modal-fecha"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="btn-cerrar-modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./orders.ts"></script>
+</body>
+</html>

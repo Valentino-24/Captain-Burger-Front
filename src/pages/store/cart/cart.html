@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Store - Carrito</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">🍔 Food Store</div>
+        <div class="user-info">
+            <a href="/src/pages/store/home/home.html">← Volver a la Tienda</a>
+            <a href="/src/pages/client/orders/orders.html">Mis Pedidos</a>
+            <button id="button_logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="cart-container">
+        <h1>Mi Carrito de Compras</h1>
+
+        <!-- Estado vacío -->
+        <div id="empty-cart" class="empty-state" style="display: none;">
+            <p>Tu carrito está vacío</p>
+            <a href="/src/pages/store/home/home.html" class="btn btn-primary">Ir a la Tienda</a>
+        </div>
+
+        <!-- Contenido del carrito -->
+        <div id="cart-content" style="display: none;">
+            <div class="cart-wrapper">
+                <!-- Lista de productos -->
+                <div class="cart-items">
+                    <h2>Productos en tu carrito</h2>
+                    <div id="cart-items-list">
+                        <!-- Los items se cargan dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Resumen del pedido -->
+                <aside class="cart-summary">
+                    <h3>Resumen del Pedido</h3>
+                    
+                    <div class="summary-line">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0</span>
+                    </div>
+                    
+                    <div class="summary-line">
+                        <span>Envío:</span>
+                        <span id="envio">$500</span>
+                    </div>
+                    
+                    <div class="summary-line total">
+                        <span>Total:</span>
+                        <span id="total">$0</span>
+                    </div>
+
+                    <button id="btn-checkout" class="btn btn-primary btn-block">
+                        Proceder al Pago
+                    </button>
+
+                    <button id="btn-vaciar" class="btn btn-danger btn-block">
+                        Vaciar Carrito
+                    </button>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Checkout -->
+    <div id="modal-checkout" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Finalizar Pedido</h2>
+            
+            <form id="form-checkout">
+                <div class="form-group">
+                    <label for="telefono">Teléfono *</label>
+                    <input 
+                        type="tel" 
+                        id="telefono" 
+                        name="telefono" 
+                        placeholder="Ej: 2612345678"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="direccion">Dirección de entrega *</label>
+                    <input 
+                        type="text" 
+                        id="direccion" 
+                        name="direccion" 
+                        placeholder="Ej: Av. San Martín 1234"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="metodoPago">Método de pago *</label>
+                    <select id="metodoPago" name="metodoPago" required>
+                        <option value="">Seleccione un método</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                        <option value="transferencia">Transferencia Bancaria</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="notas">Notas adicionales (opcional)</label>
+                    <textarea 
+                        id="notas" 
+                        name="notas" 
+                        rows="3"
+                        placeholder="Ej: Sin cebolla, timbre roto, etc."
+                    ></textarea>
+                </div>
+
+                <div class="checkout-summary">
+                    <p><strong>Total a pagar: <span id="modal-total">$0</span></strong></p>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Confirmar Pedido
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancelar-checkout">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="./cart.ts"></script>
+</body>
+</html>

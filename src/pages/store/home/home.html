@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Store - Tienda</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">🍔 Food Store</div>
+        <div class="user-info">
+            <!-- ✅ Agregado el span para el contador -->
+            <a href="/src/pages/store/cart/cart.html">🛒 Carrito (<span class="cart-badge">0</span>)</a>
+            <a href="/src/pages/client/orders/orders.html">Mis Pedidos</a>
+            <button id="button_logout">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <div class="store-wrapper">
+        <aside id="sidebar-categorias" class="sidebar">
+            <h3>Categorías</h3>
+            <ul id="lista-categorias">
+                <li class="active"><a href="#">Todas</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header-main">
+                <h1>Catálogo de Productos</h1>
+            </div>
+            
+            <div id="grid-productos" class="product-grid">
+                <!-- Los productos se cargan dinámicamente -->
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="./home.ts"></script>
+</body>
+</html>

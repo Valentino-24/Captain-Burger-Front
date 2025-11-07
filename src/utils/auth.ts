@@ -15,5 +15,28 @@ export const checkAuthUser = (rol: Rol, route: string) => {
     navigate(route);
     return;
   }
+};
 
+/**
+ * Obtiene los datos del usuario actual desde localStorage
+ * Retorna null si no hay usuario logueado
+ */
+export const getCurrentUser = (): IUser | null => {
+  const user = localStorage.getItem("userData");
+  if (!user) {
+    return null;
+  }
+  try {
+    return JSON.parse(user) as IUser;
+  } catch (error) {
+    console.error("Error al parsear userData:", error);
+    return null;
+  }
+};
+
+/**
+ * Verifica si hay un usuario logueado
+ */
+export const isAuthenticated = (): boolean => {
+  return localStorage.getItem("userData") !== null;
 };

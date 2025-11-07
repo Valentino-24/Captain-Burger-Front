@@ -189,3 +189,50 @@ export const borrarCategoria = async (id: number) => {
     throw err;
   }
 };
+
+/* ---------- PEDIDOS ---------- */
+
+export const crearPedido = async (pedidoData: {
+  usuarioId: number;
+  telefono: string;
+  direccion: string;
+  metodoPago: string;
+  notas?: string;
+  items: Array<{
+    productoId: number;
+    cantidad: number;
+    precioUnitario: number;
+  }>;
+}) => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pedidoData),
+    });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al crear pedido:', err);
+    throw err;
+  }
+};
+
+export const getPedidosUsuario = async (usuarioId: number) => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos/usuario/${usuarioId}`, { method: 'GET' });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al obtener pedidos:', err);
+    throw err;
+  }
+};
+
+export const getPedido = async (id: number) => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos/${id}`, { method: 'GET' });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al obtener pedido:', err);
+    throw err;
+  }
+};
