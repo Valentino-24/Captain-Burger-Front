@@ -1,5 +1,7 @@
 const API_URL = 'http://localhost:8080';
 
+// Manejo de respuestas
+
 async function handleResponse(res: Response) {
   if (!res.ok) {
     const text = await res.text();
@@ -9,6 +11,8 @@ async function handleResponse(res: Response) {
 }
 
 /* ---------- USUARIOS ---------- */
+
+// Crear nuevo usuario
 export const crearUsuario = async (usuarioData: {
   nombre?: string;
   email?: string;
@@ -27,6 +31,8 @@ export const crearUsuario = async (usuarioData: {
     throw error;
   }
 };
+
+// Iniciar sesión de usuario
 
 export const loginUsuario = async (email: string, password: string) => {
   try {
@@ -49,6 +55,8 @@ export const loginUsuario = async (email: string, password: string) => {
 
 /* ---------- PRODUCTOS ---------- */
 
+// Obtener todos los productos
+
 export const getProductos = async () => {
   try {
     const res = await fetch(`${API_URL}/productos`, { method: 'GET' });
@@ -59,6 +67,8 @@ export const getProductos = async () => {
   }
 };
 
+// Obtener producto por ID
+
 export const getProducto = async (id: number) => {
   try {
     const res = await fetch(`${API_URL}/productos/${id}`, { method: 'GET' });
@@ -68,6 +78,8 @@ export const getProducto = async (id: number) => {
     throw err;
   }
 };
+
+// Crear nuevo producto
 
 export const crearProducto = async (productoDto: {
   nombre: string;
@@ -89,6 +101,8 @@ export const crearProducto = async (productoDto: {
     throw err;
   }
 };
+
+// Actualizar producto
 
 export const actualizarProducto = async (
   id: number,
@@ -114,6 +128,8 @@ export const actualizarProducto = async (
   }
 };
 
+// Borrar producto
+
 export const borrarProducto = async (id: number) => {
   try {
     const res = await fetch(`${API_URL}/productos/${id}`, { method: 'DELETE' });
@@ -126,6 +142,8 @@ export const borrarProducto = async (id: number) => {
 
 /* ---------- CATEGORIAS ---------- */
 
+// Obtener todas las categorías
+
 export const getCategorias = async () => {
   try {
     const res = await fetch(`${API_URL}/categorias`, { method: 'GET' });
@@ -136,6 +154,8 @@ export const getCategorias = async () => {
   }
 };
 
+// Obtener categoría por ID
+
 export const getCategoria = async (id: number) => {
   try {
     const res = await fetch(`${API_URL}/categorias/${id}`, { method: 'GET' });
@@ -145,6 +165,8 @@ export const getCategoria = async (id: number) => {
     throw err;
   }
 };
+
+// Crear nueva categoría
 
 export const crearCategoria = async (categoriaDto: {
   nombre: string;
@@ -163,6 +185,8 @@ export const crearCategoria = async (categoriaDto: {
   }
 };
 
+// Actualizar categoría
+
 export const actualizarCategoria = async (id: number, categoriaDto: {
   nombre: string;
   descripcion?: string;
@@ -180,6 +204,8 @@ export const actualizarCategoria = async (id: number, categoriaDto: {
   }
 };
 
+// Borrar categoría
+
 export const borrarCategoria = async (id: number) => {
   try {
     const res = await fetch(`${API_URL}/categorias/${id}`, { method: 'DELETE' });
@@ -191,6 +217,8 @@ export const borrarCategoria = async (id: number) => {
 };
 
 /* ---------- PEDIDOS ---------- */
+
+// Crear nuevo pedido
 
 export const crearPedido = async (pedidoData: {
   usuarioId: number;
@@ -217,6 +245,8 @@ export const crearPedido = async (pedidoData: {
   }
 };
 
+// Obtener todos los pedidos (admin)
+
 export const getPedidos = async () => {
   try {
     const res = await fetch(`${API_URL}/pedidos`, { method: 'GET' });
@@ -226,6 +256,8 @@ export const getPedidos = async () => {
     return null;
   }
 };
+
+// Obtener pedidos de un usuario específico
 
 export const getPedidosUsuario = async (usuarioId: number) => {
   try {
@@ -247,6 +279,8 @@ export const getPedido = async (id: number) => {
   }
 };
 
+// Actualizar estado del pedido
+
 export const actualizarEstadoPedidoApi = async (id: number, estado: string) => {
   try {
     const res = await fetch(`${API_URL}/pedidos/${id}/estado`, {
@@ -261,6 +295,7 @@ export const actualizarEstadoPedidoApi = async (id: number, estado: string) => {
   }
 };
 
+// Actualizar pedido completo
 
 export const actualizarPedido = async (id: number, pedidoData: {
   usuarioId: number;
@@ -286,6 +321,8 @@ export const actualizarPedido = async (id: number, pedidoData: {
     throw err;
   }
 };
+
+// Borrar pedido
 
 export const borrarPedido = async (id: number) => {
   try {

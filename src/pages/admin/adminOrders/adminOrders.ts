@@ -6,8 +6,7 @@ import { logoutUser } from "../../../utils/localStorage";
 import { navigate } from "../../../utils/navigate";
 import { getPedido, getProductos, actualizarEstadoPedidoApi } from "../../../utils/api";
 
-// Si no existe getAllPedidos en tu api.ts, asegúrate de agregar:
-// export const getAllPedidos = async () => { const res = await fetch(`${API_URL}/pedidos`, { method: 'GET' }); return await handleResponse(res); }
+
 import { getPedidos } from "../../../utils/api";
 
 // --- PROTECCIÓN / DOM ---
@@ -152,6 +151,8 @@ const abrirModalPedido = async (id: number) => {
     modalEstadoIcon.textContent = cfg.icon;
     modalEstadoMensaje.textContent = cfg.mensaje;
 
+  
+
     // Productos (usar productMap para nombre/imagen)
     modalProductosList.innerHTML = '';
     const detalles: IDetallePedido[] = (pedido.detalles ?? []).slice();
@@ -179,6 +180,9 @@ const abrirModalPedido = async (id: number) => {
     modalSubtotal.textContent = `$${subtotal.toFixed(2)}`;
     modalEnvio.textContent = `$${COSTO_ENVIO.toFixed(2)}`;
     modalTotal.textContent = `$${(pedido.total ?? subtotal + COSTO_ENVIO).toFixed(2)}`;
+
+    // Mostrar fecha
+    modalFecha.textContent = formatearFecha(pedido.fecha);
 
     // Select de estado actual (sync)
     (selectEstadoActualizar.value as any) = pedido.estado;
@@ -208,7 +212,7 @@ const actualizarEstadoPedido = async () => {
   }
 };
 
-// Eventos UI
+// Listeners de botones
 buttonLogout.addEventListener('click', () => {
   logoutUser();
   navigate("/src/pages/auth/login/login.html");
@@ -222,7 +226,7 @@ filterEstado.addEventListener('change', () => renderTabla(pedidosCache));
 
 // Inicialización
 const initPage = async () => {
-  await cargarProductosMap(); // carga productos una vez
+  await cargarProductosMap(); 
   await cargarPedidosAdmin();
 };
 

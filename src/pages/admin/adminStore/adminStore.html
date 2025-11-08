@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/src/img/icon.ico">
     <link rel="stylesheet" href="../../../style.css">
-    <title>Food Store - Tienda</title>
+    <title>Food Store - Tienda (Admin)</title>
 </head>
 <body>
     <header class="header">
@@ -13,7 +13,7 @@
         <div class="user-info">
             <span>Tienda</span>
             <span>Panel Admin</span>
-            <span id="user-name">Juan Pérez</span>
+            <span id="user-name">Admin</span>
             <button id="button_logout">Cerrar Sesión</button>
         </div>
     </header>
@@ -24,20 +24,23 @@
             <li><a href="#">📊 Dashboard</a></li>
             <li><a href="../categories/categories.html">📋 Categorías</a></li>
             <li><a href="../products/products.html">🍔 Productos</a></li>
-            <li><a href="#">📦 Pedidos</a></li>
+            <li><a href="../adminOrders/adminOrders.html">📦 Pedidos</a></li>
             <li><a href="#" class="active">📄 Ver Tienda</a></li>
         </ul>
+    </div>
 
-        <main class="main-content" >
-            <div class="header-main">
-                <h1>Catálogo de Productos</h1>
-            </div>
-            
+    <!-- MAIN fuera del sidebar (corrección importante) -->
+    <main class="main-content">
+        <div class="header-main">
+            <h1>Catálogo de Productos</h1>
+        </div>
+        
+        <div class="card">
             <div id="grid-productos" class="product-grid">
                 <!-- Los productos se cargan dinámicamente -->
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script type="module" src="./adminStore.ts"></script>
 </body>

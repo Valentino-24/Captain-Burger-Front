@@ -2,6 +2,8 @@ import type { IUser } from "../types/IUser";
 import type { Rol } from "../types/Rol";
 import { navigate } from "./navigate";
 
+// Verificar si el usuario autenticado tiene el rol adecuado
+
 export const checkAuthUser = (rol: Rol, route: string) => {
   const user = localStorage.getItem("userData");
   if (!user) {
@@ -17,10 +19,8 @@ export const checkAuthUser = (rol: Rol, route: string) => {
   }
 };
 
-/**
- * Obtiene los datos del usuario actual desde localStorage
- * Retorna null si no hay usuario logueado
- */
+// Obtener el usuario actualmente logueado
+
 export const getCurrentUser = (): IUser | null => {
   const user = localStorage.getItem("userData");
   if (!user) {
@@ -34,9 +34,8 @@ export const getCurrentUser = (): IUser | null => {
   }
 };
 
-/**
- * Verifica si hay un usuario logueado
- */
+// Verificar si el usuario está autenticado
+
 export const isAuthenticated = (): boolean => {
   return localStorage.getItem("userData") !== null;
 };

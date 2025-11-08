@@ -160,12 +160,10 @@ buttonLogout.addEventListener("click", () => {
     navigate("/src/pages/auth/login/login.html");
 });
 
-/* ---------- Inicio ---------- */
+// Inicialización
 
 (async () => {
-  // Si no pasan la auth, checkAuthUser ya redirigió
   await cargarCategoriasDesdeBackend();
 })();
 
-// Export vacío para evitar conflictos de scope
 export {};

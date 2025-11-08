@@ -15,6 +15,7 @@ const subtotalElement = document.getElementById("subtotal") as HTMLSpanElement;
 const totalElement = document.getElementById("total") as HTMLSpanElement;
 const btnCheckout = document.getElementById("btn-checkout") as HTMLButtonElement;
 const btnVaciar = document.getElementById("btn-vaciar") as HTMLButtonElement;
+const userName = document.getElementById("user-name") as HTMLSpanElement;
 
 // Modal
 const modal = document.getElementById("modal-checkout") as HTMLDivElement;
@@ -23,15 +24,17 @@ const formCheckout = document.getElementById("form-checkout") as HTMLFormElement
 const btnCancelarCheckout = document.getElementById("btn-cancelar-checkout") as HTMLButtonElement;
 const modalTotal = document.getElementById("modal-total") as HTMLSpanElement;
 
+const user = localStorage.getItem("userData");
+userName.textContent = user ? JSON.parse(user).nombre : "USUARIO";
+
 // Constantes
 const COSTO_ENVIO = 500;
 
 // Variables globales
 let productosCarrito: Array<IProducto & { quantity: number }> = [];
 
-/**
- * Carga los productos del carrito desde localStorage y obtiene sus datos de la API
- */
+// Carga los productos del carrito desde el almacenamiento local y obtiene sus datos completos
+
 const cargarProductosCarrito = async () => {
     const cartItems = getCart();
     
@@ -56,17 +59,15 @@ const cargarProductosCarrito = async () => {
     }
 };
 
-/**
- * Muestra el estado vacío del carrito
- */
+// Muestra el mensaje de carrito vacío
+
 const mostrarCarritoVacio = () => {
     emptyCart.style.display = "block";
     cartContent.style.display = "none";
 };
 
-/**
- * Renderiza los productos en el carrito
- */
+// Renderiza los productos en el carrito
+
 const renderizarCarrito = () => {
     emptyCart.style.display = "none";
     cartContent.style.display = "block";
@@ -145,9 +146,8 @@ const renderizarCarrito = () => {
     actualizarTotales();
 };
 
-/**
- * Calcula y actualiza los totales
- */
+// Actualiza los totales del carrito
+
 const actualizarTotales = () => {
     const subtotal = productosCarrito.reduce(
         (acc, prod) => acc + (prod.precio * prod.quantity), 
@@ -160,9 +160,8 @@ const actualizarTotales = () => {
     modalTotal.textContent = `$${total.toFixed(2)}`;
 };
 
-/**
- * Vaciar carrito
- */
+// Vaciar carrito
+
 btnVaciar.addEventListener("click", () => {
     if (confirm("¿Estás seguro de vaciar el carrito?")) {
         clearCart();
@@ -170,16 +169,14 @@ btnVaciar.addEventListener("click", () => {
     }
 });
 
-/**
- * Abrir modal de checkout
- */
+// Abrir modal de checkout
+
 btnCheckout.addEventListener("click", () => {
     modal.style.display = "flex";
 });
 
-/**
- * Cerrar modal
- */
+// Cerrar modal de checkout
+
 modalClose.addEventListener("click", () => {
     modal.style.display = "none";
 });
@@ -195,9 +192,8 @@ window.addEventListener("click", (e) => {
     }
 });
 
-/**
- * Procesar el pedido
- */
+// Procesar checkout
+
 formCheckout.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -252,17 +248,15 @@ formCheckout.addEventListener("submit", async (e) => {
     }
 });
 
-/**
- * Logout
- */
+// Logout
+
 buttonLogout.addEventListener("click", () => {
     logoutUser();
     navigate("/src/pages/auth/login/login.html");
 });
 
-/**
- * Inicialización
- */
+// Inicialización de la página
+
 const initPage = () => {
     checkAuthUser("USUARIO", "/src/pages/auth/login/login.html");
     cargarProductosCarrito();

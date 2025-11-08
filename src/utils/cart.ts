@@ -1,17 +1,13 @@
-// --- 1. Definimos el "molde" para un item del carrito ---
-// (No necesitamos el producto entero, solo su ID y la cantidad)
+// Definimos la estructura de un ítem en el carrito
 export interface ICartItem {
     productId: number;
     quantity: number;
 }
 
-// --- 2. Esta es la "llave" para guardar en localStorage ---
+// Clave para almacenar el carrito en localStorage
 const CART_KEY = 'shoppingCart';
 
-/**
-    * Ayudante: Obtiene el carrito actual desde localStorage.
-    * Si no hay carrito, devuelve un array vacío.
-    */
+// Obtiene el carrito actual desde localStorage
 export const getCart = (): ICartItem[] => {
     const cart = localStorage.getItem(CART_KEY);
     // Si 'cart' existe, lo "parsea" (convierte de string a objeto)
@@ -19,16 +15,14 @@ export const getCart = (): ICartItem[] => {
     return cart ? JSON.parse(cart) : [];
 };
 
-/**
-    * Ayudante: Guarda el carrito actualizado en localStorage.
-    */
+// Guarda el carrito actualizado en localStorage
+
 const saveCart = (cart: ICartItem[]): void => {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
 };
 
-/**
-    * LÓGICA PRINCIPAL: Agrega un producto al carrito.
-    */
+// Agrega un producto al carrito
+
 export const addToCart = (productId: number) => {
     // 1. Obtenemos el carrito actual
     const cart = getCart();

@@ -3,22 +3,25 @@ import { logoutUser } from "../../../utils/localStorage";
 import { navigate } from "../../../utils/navigate";
 import { getCategorias, getProductos } from "../../../utils/api";
 import type { ICategoria } from "../../../types/ICategoria";
-import type { IProducto } from "../../../types/IProducto"; // ✅ Cambiado
-import { addToCart, getCartCount } from "../../../utils/cart"; // ✅ Agregado getCartCount
+import type { IProducto } from "../../../types/IProducto";
+import { addToCart, getCartCount } from "../../../utils/cart";
 
 // Elementos del DOM
 const buttonLogout = document.getElementById("button_logout") as HTMLButtonElement;
 const listaCategorias = document.getElementById("lista-categorias") as HTMLUListElement;
 const gridProductos = document.getElementById("grid-productos") as HTMLDivElement;
-const cartBadge = document.querySelector('.cart-badge') as HTMLSpanElement; // ✅ Nuevo
+const cartBadge = document.querySelector('.cart-badge') as HTMLSpanElement; 
+
+const userName = document.getElementById("user-name") as HTMLSpanElement;
+const user = localStorage.getItem("userData");
+userName.textContent = user ? JSON.parse(user).nombre : "USUARIO";
 
 // Variable global para almacenar productos
 let todosLosProductos: IProducto[] = [];
 let categoriaSeleccionada: number | null = null;
 
-/**
- * Actualiza el contador del carrito en el header
- */
+// Actualiza el contador del carrito en el badge
+
 const actualizarContadorCarrito = () => {
     const count = getCartCount();
     if (cartBadge) {
@@ -26,9 +29,8 @@ const actualizarContadorCarrito = () => {
     }
 };
 
-/**
- * Renderiza las categorías en el sidebar
- */
+// Renderiza las categorías en el menú lateral
+
 const renderCategorias = async () => {
     try {
         const categorias = await getCategorias();
@@ -41,7 +43,7 @@ const renderCategorias = async () => {
             listaCategorias.appendChild(li);
         });
 
-        // ✅ Event listeners para filtrar por categoría
+        // Event listener para selección de categoría
         listaCategorias.addEventListener('click', (e) => {
             e.preventDefault();
             const target = e.target as HTMLElement;
@@ -63,9 +65,8 @@ const renderCategorias = async () => {
     }
 };
 
-/**
- * Renderiza los productos (filtrados si hay categoría seleccionada)
- */
+// Renderiza los productos en el grid
+
 const renderProductos = async () => {
     try {
         // Si aún no tenemos productos, los obtenemos
@@ -99,7 +100,7 @@ const renderProductos = async () => {
                 <button class="btn btn-primary btn-agregar" data-id="${prod.id}">Agregar al Carrito</button>
             `;
 
-            // ✅ Click en la card para ir al detalle
+            // Click en la card para ir al detalle
             card.addEventListener('click', (e) => {
                 // Si no clickearon el botón, ir al detalle
                 if (!(e.target as HTMLElement).classList.contains('btn-agregar')) {
@@ -110,7 +111,7 @@ const renderProductos = async () => {
             gridProductos.appendChild(card);
         });
 
-        // ✅ Event listeners para botones "Agregar"
+        // Event listeners para botones "Agregar"
         const botonesAgregar = document.querySelectorAll('.btn-agregar');
         botonesAgregar.forEach(boton => {
             boton.addEventListener('click', (e) => {

@@ -10,6 +10,10 @@ const loading = document.getElementById("loading") as HTMLDivElement;
 const emptyOrders = document.getElementById("empty-orders") as HTMLDivElement;
 const ordersList = document.getElementById("orders-list") as HTMLDivElement;
 
+const userName = document.getElementById("user-name") as HTMLSpanElement;
+const user = localStorage.getItem("userData");
+userName.textContent = user ? JSON.parse(user).nombre : "USUARIO";
+
 // Modal
 const modal = document.getElementById("modal-detalle") as HTMLDivElement;
 const modalClose = document.querySelector(".modal-close") as HTMLSpanElement;
@@ -46,9 +50,8 @@ const estadosConfig = {
     }
 };
 
-/**
- * Formatea una fecha a formato legible
- */
+// Formatear fecha
+
 const formatearFecha = (fecha: string): string => {
     const date = new Date(fecha);
     const opciones: Intl.DateTimeFormatOptions = {
@@ -61,9 +64,8 @@ const formatearFecha = (fecha: string): string => {
     return date.toLocaleDateString('es-AR', opciones);
 };
 
-/**
- * Carga los pedidos del usuario
- */
+// Cargar pedidos del usuario autenticado
+
 const cargarPedidos = async () => {
     const usuario = getCurrentUser();
     if (!usuario) {
@@ -78,16 +80,12 @@ const cargarPedidos = async () => {
 
     try {
         const pedidos: IPedido[] = await getPedidosUsuario(usuario.id!);
-
-
         loading.style.display = "none";
 
         if (!pedidos || pedidos.length === 0) {
             emptyOrders.style.display = "block";
             return;
         }
-
-        // Ordenar por fecha (más recientes primero)
         pedidos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
         renderizarPedidos(pedidos);
@@ -100,19 +98,16 @@ const cargarPedidos = async () => {
     }
 };
 
-/**
- * Renderiza la lista de pedidos
- */
+// Renderizar lista de pedidos
+
 const renderizarPedidos = (pedidos: IPedido[]) => {
     ordersList.innerHTML = '';
     pedidos.forEach(pedido => {
-        pedido.estado = pedido.estado || 'pending'; // Asegurar que estado tenga un valor válido
+        pedido.estado = pedido.estado || 'pending';
         const estadoConfig = estadosConfig[pedido.estado];
-    
-        // Calcular cantidad total de productos
+
         const cantidadTotal = pedido.detalles.reduce((acc, item) => acc + item.cantidad, 0);
-    
-        // Obtener primeros 3 productos para mostrar
+
         const productosResumen = pedido.detalles.slice(0, 3);
         const productosExtra = pedido.detalles.length - 3;
         const card = document.createElement('div');
@@ -159,9 +154,8 @@ const renderizarPedidos = (pedidos: IPedido[]) => {
     });
 };
 
-/**
- * Muestra el detalle completo de un pedido en el modal
- */
+// Mostrar detalle del pedido en el modal
+
 const mostrarDetallePedido = async (pedidoId: number) => {
     try {
         const pedido: IPedido = await getPedido(pedidoId);
@@ -231,9 +225,8 @@ const mostrarDetallePedido = async (pedidoId: number) => {
     }
 };
 
-/**
- * Cerrar modal
- */
+// Eventos del modal
+
 modalClose.addEventListener('click', () => {
     modal.style.display = 'none';
 });
@@ -248,17 +241,15 @@ window.addEventListener('click', (e) => {
     }
 });
 
-/**
- * Logout
- */
+// Logout
+
 buttonLogout.addEventListener("click", () => {
     logoutUser();
     navigate("/src/pages/auth/login/login.html");
 });
 
-/**
- * Inicialización
- */
+// Inicialización
+
 const initPage = () => {
     checkAuthUser("USUARIO", "/src/pages/auth/login/login.html");
     cargarPedidos();

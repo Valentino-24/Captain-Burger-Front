@@ -1,40 +1,14 @@
-// src/pages/admin/products/products.ts
-
-// -----------------------------
-// IMPORTS
-// -----------------------------
-// Aquí importamos las interfaces (tipos) y las funciones que llaman al backend.
-// Fin de esta sección: importaciones listas, seguimos con el estado y la protección de ruta.
 import type { IProducto } from "../../../types/IProducto";
 import type { ICategoria } from "../../../types/ICategoria";
 import { getProductos, crearProducto, actualizarProducto, borrarProducto, getCategorias } from "../../../utils/api";
 import { checkAuthUser } from "../../../utils/auth";
 import { logoutUser } from "../../../utils/localStorage";
 import { navigate } from "../../../utils/navigate";
-// -----------------------------
-// FIN: IMPORTS
-// -----------------------------
 
-
-// -----------------------------
-// ESTADO LOCAL Y PROTECCIÓN
-// -----------------------------
-// `productos` es el array que usaremos para renderizar la tabla. Se llenará desde el backend.
-// `checkAuthUser` valida que el usuario esté autenticado y tenga rol ADMIN antes de ejecutar la página.
-// Fin de esta sección: estado inicial definido y verificación de permisos hecha.
 let productos: IProducto[] = [];
 
 checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
-// -----------------------------
-// FIN: ESTADO LOCAL Y PROTECCIÓN
-// -----------------------------
-
-
-// -----------------------------
-// SELECCIÓN DE ELEMENTOS DEL DOM
-// -----------------------------
-// Aquí traemos referencias a elementos del HTML (botones, formulario, inputs, tabla).
-// Fin de esta sección: ya tenemos los elementos DOM en variables para manipularlos.
+// Elementos del DOM
 const btnNuevoProducto = document.getElementById("btn-nuevo-producto") as HTMLButtonElement;
 const btnCancelar = document.getElementById("btn-cancelar") as HTMLButtonElement;
 const btnCerrarModalProducto = document.getElementById("btn-cerrar-modal-producto") as HTMLSpanElement;
@@ -55,17 +29,7 @@ const userName = document.getElementById("user-name") as HTMLSpanElement;
 
 const user = localStorage.getItem("userData");
 userName.textContent = user ? JSON.parse(user).nombre : "Admin";
-// -----------------------------
-// FIN: SELECCIÓN DE ELEMENTOS DEL DOM
-// -----------------------------
 
-
-// -----------------------------
-// HELPERS: MAPEOS Y UTILIDADES
-// -----------------------------
-// Funciones pequeñas que transforman datos o facilitan operaciones reutilizables.
-// - dtoToIProducto: convierte lo que viene del backend a la interfaz que maneja el front.
-// Fin de esta sección: helpers listos para usar.
 const dtoToIProducto = (dto: any): IProducto => {
     return {
         id: dto.id,
@@ -75,19 +39,12 @@ const dtoToIProducto = (dto: any): IProducto => {
         stock: dto.stock,
         categoriaId: dto.categoriaId ?? null,
         imagenURL: dto.imagenURL ?? '',
-        disponible: dto.disponible // campo no persistido por ahora
+        disponible: dto.disponible
     } as IProducto;
 };
-// -----------------------------
-// FIN: HELPERS
-// -----------------------------
 
+//Renderizado categorías en el dropdown
 
-// -----------------------------
-// RENDERIZADO: DROPDOWN DE CATEGORÍAS
-// -----------------------------
-// Carga las categorías desde el backend (o lanza error) y crea <option> dentro del <select>.
-// Fin de esta sección: el select de categorías queda poblado con opciones del backend.
 const renderCategoriasDropdown = async () => {
     categoriaSelect.innerHTML = '';
     // Intentamos obtener del backend
@@ -100,19 +57,8 @@ const renderCategoriasDropdown = async () => {
         categoriaSelect.appendChild(option);
     });
 };
-// -----------------------------
-// FIN: RENDERIZADO CATEGORÍAS
-// -----------------------------
 
-
-// -----------------------------
-// RENDERIZADO: TABLA DE PRODUCTOS
-// -----------------------------
-// Dibuja todas las filas de la tabla a partir del array `productos`.
-// También agrega los event listeners para editar y eliminar cada fila.
-// Fin de esta sección: tabla poblada y botones conectados a sus handlers.
-
-
+//Renderizado tabla de productos
 
 const renderProductos = () => {
     tablaProductosBody.innerHTML = '';
@@ -138,7 +84,7 @@ const renderProductos = () => {
         tablaProductosBody.appendChild(tr);
     });
 
-    // Event Listeners para ELIMINAR
+    // Listeners para ELIMINAR
     document.querySelectorAll('.btn-eliminar').forEach(boton => {
         boton.addEventListener('click', async () => {
             const id = (boton as HTMLElement).dataset.id;
@@ -154,7 +100,7 @@ const renderProductos = () => {
         });
     });
 
-    // Event Listeners para EDITAR
+    // Listeners para EDITAR
     document.querySelectorAll('.btn-editar').forEach(boton => {
         boton.addEventListener('click', () => {
             const id = (boton as HTMLElement).dataset.id;
@@ -164,31 +110,17 @@ const renderProductos = () => {
         });
     });
 };
-// -----------------------------
-// FIN: RENDERIZADO TABLA
-// -----------------------------
 
+// Obtener nombre de categoría por ID
 
-// -----------------------------
-// UTILDAD: OBTENER NOMBRE DE CATEGORÍA
-// -----------------------------
-// Busca en el <select> el <option> con el id dado y devuelve su textContent.
-// Fin de esta sección: función utilitaria lista para mostrar el nombre en la tabla.
 const getCategoriaNombre = (id: number | null) => {
     if (!id) return 'Desconocida';
     const option = categoriaSelect.querySelector(`option[value="${id}"]`) as HTMLOptionElement;
     return option ? option.textContent || 'Desconocida' : 'Desconocida';
 };
-// -----------------------------
-// FIN: OBTENER NOMBRE DE CATEGORÍA
-// -----------------------------
 
+// Mostrar y ocultar modal
 
-// -----------------------------
-// MODAL: MOSTRAR Y OCULTAR
-// -----------------------------
-// Funciones pequeñas para abrir/cerrar el modal de producto y resetear el form.
-// Fin de esta sección: control del modal listo.
 const showModal = (title: string) => {
     modalTitulo.textContent = title;
     modalProducto.style.display = "flex";
@@ -198,16 +130,9 @@ const hideModal = () => {
     formProducto.reset();
     productoIdInput.value = '';
 };
-// -----------------------------
-// FIN: MODAL
-// -----------------------------
 
+// Traer productos desde el backend
 
-// -----------------------------
-// DATA: CARGAR PRODUCTOS DESDE BACKEND
-// -----------------------------
-// Hace una petición al backend, mapea los DTOs a `IProducto` y renderiza la tabla.
-// Fin de esta sección: productos sincronizados con la BD y mostrados en pantalla.
 const cargarProductosDesdeBackend = async () => {
     try {
         const dtos = await getProductos();
@@ -221,16 +146,9 @@ const cargarProductosDesdeBackend = async () => {
         renderProductos();
     }
 };
-// -----------------------------
-// FIN: DATA
-// -----------------------------
 
+// Handler para editar producto
 
-// -----------------------------
-// HANDLER: CARGAR DATOS EN EL FORMULARIO PARA EDITAR
-// -----------------------------
-// Cuando el usuario hace click en "Editar", esta función carga los valores en el modal.
-// Fin de esta sección: form listo para que el usuario modifique y guarde.
 const handleEditProducto = (id: number) => {
     const producto = productos.find(p => p.id === id);
     if (!producto) return;
@@ -244,30 +162,16 @@ const handleEditProducto = (id: number) => {
     disponibleInput.checked = producto.disponible;
     showModal('Editar Producto');
 };
-// -----------------------------
-// FIN: HANDLER EDITAR
-// -----------------------------
 
+// Inicialización
 
-// -----------------------------
-// INICIALIZACIÓN (IIFE)
-// -----------------------------
-// Punto de entrada: cargamos el dropdown de categorías y los productos desde la BD.
-// Fin de esta sección: la UI queda poblada al abrir la página.
 (async () => {
     await renderCategoriasDropdown();
     await cargarProductosDesdeBackend();
 })();
-// -----------------------------
-// FIN: INICIALIZACIÓN
-// -----------------------------
 
+// Listeners de eventos UI
 
-// -----------------------------
-// EVENTOS UI: BOTONES Y FORM
-// -----------------------------
-// Listeners para nuevos productos, cancelar, cerrar modal y envío del formulario.
-// Fin de esta sección: la UI está completamente interactiva.
 btnNuevoProducto.addEventListener('click', () => {
     formProducto.reset();
     productoIdInput.value = '';
@@ -305,14 +209,11 @@ formProducto.addEventListener('submit', async (event) => {
 
     try {
         if (!idString) {
-            // Crear nuevo producto en el backend
             await crearProducto(dtoPayload);
         } else {
-            // Actualizar producto existente en el backend
             const id = parseInt(idString);
             await actualizarProducto(id, dtoPayload);
         }
-        // Refrescar la lista desde backend y cerrar modal
         await cargarProductosDesdeBackend();
         hideModal();
     } catch (err) {
@@ -324,12 +225,5 @@ buttonLogout.addEventListener("click", () => {
     logoutUser();
     navigate("/src/pages/auth/login/login.html");
 });
-// -----------------------------
-// FIN: EVENTOS UI
-// -----------------------------
-
 
 export {};
-// -----------------------------
-// FIN DEL ARCHIVO products.ts
-// -----------------------------
