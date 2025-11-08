@@ -32,6 +32,17 @@ export const crearUsuario = async (usuarioData: {
   }
 };
 
+//Obtener usuario por ID
+export const getUsuario = async (id: number) => {
+  try {
+    const res = await fetch(`${API_URL}/usuarios/${id}`, { method: 'GET' });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al obtener usuario:', err);
+    throw err;
+  }
+};
+
 // Iniciar sesión de usuario
 
 export const loginUsuario = async (email: string, password: string) => {

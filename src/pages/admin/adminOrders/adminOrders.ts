@@ -4,7 +4,7 @@ import type { IDetallePedido } from "../../../types/IPedido";
 import { checkAuthUser } from "../../../utils/auth";
 import { logoutUser } from "../../../utils/localStorage";
 import { navigate } from "../../../utils/navigate";
-import { getPedido, getProductos, actualizarEstadoPedidoApi } from "../../../utils/api";
+import { getPedido, getProductos, actualizarEstadoPedidoApi, getUsuario } from "../../../utils/api";
 
 
 import { getPedidos } from "../../../utils/api";
@@ -92,9 +92,10 @@ const renderTabla = (lista: IPedido[]) => {
   const filas = (lista ?? []).filter(p => estadoFiltro === 'all' ? true : p.estado === estadoFiltro);
 
   tablaPedidosBody.innerHTML = '';
-  filas.forEach(pedido => {
+  filas.forEach(async pedido => {
+    const userOrderName = await getUsuario(pedido.usuarioId!);
     const tr = document.createElement('tr');
-    const usuarioText = pedido.usuarioId ?? 'N/A';
+    const usuarioText = userOrderName.nombre;
     const fechaText = formatearFecha(pedido.fecha);
     const totalText = `$${(pedido.total ?? 0).toFixed(2)}`;
     const estado = pedido.estado ?? 'pending';
