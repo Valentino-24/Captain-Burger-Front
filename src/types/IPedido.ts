@@ -8,10 +8,10 @@ export interface IPedido {
     direccion: string;
     metodoPago: string;
     notas?: string;
-    items: IPedidoItem[];
+    detalles: IDetallePedido[];
 }
 
-export interface IPedidoItem {
+export interface IDetallePedido {
     id: number;
     productoId: number;
     productoNombre: string;

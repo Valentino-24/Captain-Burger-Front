@@ -77,7 +77,8 @@ const cargarPedidos = async () => {
     ordersList.style.display = "none";
 
     try {
-        const pedidos: IPedido[] = await getPedidosUsuario(usuario.id);
+        const pedidos: IPedido[] = await getPedidosUsuario(usuario.id!);
+
 
         loading.style.display = "none";
 
@@ -104,17 +105,16 @@ const cargarPedidos = async () => {
  */
 const renderizarPedidos = (pedidos: IPedido[]) => {
     ordersList.innerHTML = '';
-
     pedidos.forEach(pedido => {
+        pedido.estado = pedido.estado || 'pending'; // Asegurar que estado tenga un valor válido
         const estadoConfig = estadosConfig[pedido.estado];
     
         // Calcular cantidad total de productos
-        const cantidadTotal = pedido.items.reduce((acc, item) => acc + item.cantidad, 0);
+        const cantidadTotal = pedido.detalles.reduce((acc, item) => acc + item.cantidad, 0);
     
         // Obtener primeros 3 productos para mostrar
-        const productosResumen = pedido.items.slice(0, 3);
-        const productosExtra = pedido.items.length - 3;
-
+        const productosResumen = pedido.detalles.slice(0, 3);
+        const productosExtra = pedido.detalles.length - 3;
         const card = document.createElement('div');
         card.className = 'order-card';
         card.innerHTML = `
@@ -129,7 +129,7 @@ const renderizarPedidos = (pedidos: IPedido[]) => {
         <div class="order-body">
             <div class="order-productos-preview">
                 ${productosResumen.map(item => `
-                <span class="producto-preview">${item.productoNombre} (x${item.cantidad})</span>
+                <span class="producto-preview">Producto: ${item.productoNombre} (x${item.cantidad})</span>
                 `).join('')}
                 ${productosExtra > 0 ? `<span class="producto-preview-extra">+${productosExtra} más</span>` : ''}
             </div>
@@ -165,6 +165,7 @@ const renderizarPedidos = (pedidos: IPedido[]) => {
 const mostrarDetallePedido = async (pedidoId: number) => {
     try {
         const pedido: IPedido = await getPedido(pedidoId);
+        pedido.estado = pedido.estado || 'pending'; // Asegurar que estado tenga un valor válido
         const estadoConfig = estadosConfig[pedido.estado];
 
         // Llenar información del modal
@@ -193,25 +194,25 @@ const mostrarDetallePedido = async (pedidoId: number) => {
         const productosListModal = document.getElementById('modal-productos-list') as HTMLDivElement;
         productosListModal.innerHTML = '';
     
-        pedido.items.forEach(item => {
+        pedido.detalles.forEach(detalle => {
             const productoDiv = document.createElement('div');
             productoDiv.className = 'producto-item';
             productoDiv.innerHTML = `
-            <img src="${item.productoImagen || '/placeholder.jpg'}" alt="${item.productoNombre}">
+            <img src="${detalle.productoImagen || '/placeholder.jpg'}" alt="${detalle.productoNombre}">
             <div class="producto-info">
-                <h4>${item.productoNombre}</h4>
-                <p>Cantidad: ${item.cantidad}</p>
-                <p>Precio unitario: $${item.precioUnitario}</p>
+                <h4>${detalle.productoNombre}</h4>
+                <p>Cantidad: ${detalle.cantidad}</p>
+                <p>Precio unitario: $${detalle.precioUnitario.toFixed(2)}</p>
             </div>
             <div class="producto-total">
-                <strong>$${(item.precioUnitario * item.cantidad).toFixed(2)}</strong>
+                <strong>$${(detalle.precioUnitario * detalle.cantidad).toFixed(2)}</strong>
             </div>
             `;
             productosListModal.appendChild(productoDiv);
         });
 
         // Calcular subtotal
-        const subtotal = pedido.items.reduce(
+        const subtotal = pedido.detalles.reduce(
             (acc, item) => acc + (item.precioUnitario * item.cantidad),
             0
         );

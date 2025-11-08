@@ -1,5 +1,7 @@
 import type { ICategoria } from "../../../types/ICategoria";
 import { getCategorias, crearCategoria, actualizarCategoria, borrarCategoria } from "../../../utils/api";
+import { logoutUser } from "../../../utils/localStorage";
+import { navigate } from "../../../utils/navigate";
 
 
 //checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
@@ -15,6 +17,12 @@ const modalTitulo = document.getElementById("modal-titulo") as HTMLHeadingElemen
 const categoriaIdInput = document.getElementById("categoria-id") as HTMLInputElement;
 const nombreInput = document.getElementById("nombre") as HTMLInputElement;
 const descripcionInput = document.getElementById("descripcion") as HTMLInputElement;
+const buttonLogout = document.getElementById("button_logout") as HTMLButtonElement;
+
+const userName = document.getElementById("user-name") as HTMLSpanElement;
+
+const user = localStorage.getItem("userData");
+userName.textContent = user ? JSON.parse(user).nombre : "Admin";
 
 
 let categorias: ICategoria[] = [];
@@ -22,11 +30,11 @@ let categorias: ICategoria[] = [];
 
 const showModal = (title: string) => {
   modalTitulo.textContent = title;
-  modalCategoria.classList.remove('hidden');
+  modalCategoria.style.display = "flex";
 };
 
 const hideModal = () => {
-  modalCategoria.classList.add('hidden');
+  modalCategoria.style.display = "none";
   formCategoria.reset();
   categoriaIdInput.value = '';
 };
@@ -145,6 +153,11 @@ formCategoria.addEventListener('submit', async (event) => {
     console.error('Error guardando categoría:', err);
     alert('Ocurrió un error al guardar la categoría.');
   }
+});
+
+buttonLogout.addEventListener("click", () => {
+    logoutUser();
+    navigate("/src/pages/auth/login/login.html");
 });
 
 /* ---------- Inicio ---------- */

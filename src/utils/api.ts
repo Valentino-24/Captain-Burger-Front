@@ -198,7 +198,7 @@ export const crearPedido = async (pedidoData: {
   direccion: string;
   metodoPago: string;
   notas?: string;
-  items: Array<{
+  detalles: Array<{
     productoId: number;
     cantidad: number;
     precioUnitario: number;
@@ -214,6 +214,16 @@ export const crearPedido = async (pedidoData: {
   } catch (err) {
     console.error('Error al crear pedido:', err);
     throw err;
+  }
+};
+
+export const getPedidos = async () => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos`, { method: 'GET' });
+    return await handleResponse(res);
+  } catch (err) {
+    console.warn('No se pudo obtener pedidos desde backend:', err);
+    return null;
   }
 };
 
@@ -233,6 +243,58 @@ export const getPedido = async (id: number) => {
     return await handleResponse(res);
   } catch (err) {
     console.error('Error al obtener pedido:', err);
+    throw err;
+  }
+};
+
+export const actualizarEstadoPedidoApi = async (id: number, estado: string) => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos/${id}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado })
+    });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al actualizar estado del pedido:', err);
+    throw err;
+  }
+};
+
+
+export const actualizarPedido = async (id: number, pedidoData: {
+  usuarioId: number;
+  telefono: string;
+  direccion: string;
+  metodoPago: string;
+  notas?: string;
+  detalles: Array<{
+    productoId: number;
+    cantidad: number;
+    precioUnitario: number;
+  }>;
+}) => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pedidoData),
+    });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al actualizar pedido:', err);
+    throw err;
+  }
+};
+
+export const borrarPedido = async (id: number) => {
+  try {
+    const res = await fetch(`${API_URL}/pedidos/${id}`, {
+      method: 'DELETE'
+    });
+    return await handleResponse(res);
+  } catch (err) {
+    console.error('Error al eliminar pedido:', err);
     throw err;
   }
 };

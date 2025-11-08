@@ -1,15 +1,40 @@
 // src/pages/admin/products/products.ts
+
+// -----------------------------
+// IMPORTS
+// -----------------------------
+// Aquí importamos las interfaces (tipos) y las funciones que llaman al backend.
+// Fin de esta sección: importaciones listas, seguimos con el estado y la protección de ruta.
 import type { IProducto } from "../../../types/IProducto";
 import type { ICategoria } from "../../../types/ICategoria";
 import { getProductos, crearProducto, actualizarProducto, borrarProducto, getCategorias } from "../../../utils/api";
 import { checkAuthUser } from "../../../utils/auth";
+import { logoutUser } from "../../../utils/localStorage";
+import { navigate } from "../../../utils/navigate";
+// -----------------------------
+// FIN: IMPORTS
+// -----------------------------
 
-// Estado local (se llenará desde el backend)
+
+// -----------------------------
+// ESTADO LOCAL Y PROTECCIÓN
+// -----------------------------
+// `productos` es el array que usaremos para renderizar la tabla. Se llenará desde el backend.
+// `checkAuthUser` valida que el usuario esté autenticado y tenga rol ADMIN antes de ejecutar la página.
+// Fin de esta sección: estado inicial definido y verificación de permisos hecha.
 let productos: IProducto[] = [];
 
 checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
+// -----------------------------
+// FIN: ESTADO LOCAL Y PROTECCIÓN
+// -----------------------------
 
+
+// -----------------------------
 // SELECCIÓN DE ELEMENTOS DEL DOM
+// -----------------------------
+// Aquí traemos referencias a elementos del HTML (botones, formulario, inputs, tabla).
+// Fin de esta sección: ya tenemos los elementos DOM en variables para manipularlos.
 const btnNuevoProducto = document.getElementById("btn-nuevo-producto") as HTMLButtonElement;
 const btnCancelar = document.getElementById("btn-cancelar") as HTMLButtonElement;
 const btnCerrarModalProducto = document.getElementById("btn-cerrar-modal-producto") as HTMLSpanElement;
@@ -25,8 +50,22 @@ const stockInput = document.getElementById("stock") as HTMLInputElement;
 const categoriaSelect = document.getElementById("categoria") as HTMLSelectElement;
 const imagenInput = document.getElementById("imagen") as HTMLInputElement;
 const disponibleInput = document.getElementById("disponible") as HTMLInputElement;
+const buttonLogout = document.getElementById("button_logout") as HTMLButtonElement;
+const userName = document.getElementById("user-name") as HTMLSpanElement;
 
-// Helper: mapeo DTO backend <-> IProducto front
+const user = localStorage.getItem("userData");
+userName.textContent = user ? JSON.parse(user).nombre : "Admin";
+// -----------------------------
+// FIN: SELECCIÓN DE ELEMENTOS DEL DOM
+// -----------------------------
+
+
+// -----------------------------
+// HELPERS: MAPEOS Y UTILIDADES
+// -----------------------------
+// Funciones pequeñas que transforman datos o facilitan operaciones reutilizables.
+// - dtoToIProducto: convierte lo que viene del backend a la interfaz que maneja el front.
+// Fin de esta sección: helpers listos para usar.
 const dtoToIProducto = (dto: any): IProducto => {
     return {
         id: dto.id,
@@ -35,12 +74,20 @@ const dtoToIProducto = (dto: any): IProducto => {
         precio: dto.precio ?? 0,
         stock: dto.stock,
         categoriaId: dto.categoriaId ?? null,
-        imagen: dto.imagenURL ?? '',
-        disponible: true // no se persiste por ahora
+        imagenURL: dto.imagenURL ?? '',
+        disponible: dto.disponible // campo no persistido por ahora
     } as IProducto;
 };
+// -----------------------------
+// FIN: HELPERS
+// -----------------------------
 
-// Rellena el <select> de categorías (intenta backend, si falla usa fallback)
+
+// -----------------------------
+// RENDERIZADO: DROPDOWN DE CATEGORÍAS
+// -----------------------------
+// Carga las categorías desde el backend (o lanza error) y crea <option> dentro del <select>.
+// Fin de esta sección: el select de categorías queda poblado con opciones del backend.
 const renderCategoriasDropdown = async () => {
     categoriaSelect.innerHTML = '';
     // Intentamos obtener del backend
@@ -53,8 +100,20 @@ const renderCategoriasDropdown = async () => {
         categoriaSelect.appendChild(option);
     });
 };
+// -----------------------------
+// FIN: RENDERIZADO CATEGORÍAS
+// -----------------------------
 
-// Dibuja la tabla de productos en el HTML.
+
+// -----------------------------
+// RENDERIZADO: TABLA DE PRODUCTOS
+// -----------------------------
+// Dibuja todas las filas de la tabla a partir del array `productos`.
+// También agrega los event listeners para editar y eliminar cada fila.
+// Fin de esta sección: tabla poblada y botones conectados a sus handlers.
+
+
+
 const renderProductos = () => {
     tablaProductosBody.innerHTML = '';
 
@@ -63,7 +122,7 @@ const renderProductos = () => {
 
         tr.innerHTML = `
         <td>${producto.id}</td>
-        <td><img src="${producto.imagen}" class="img-product"></td>
+        <td><img src="${producto.imagenURL}" class="img-product"></td>
         <td>${producto.nombre}</td>
         <td>${producto.descripcion}</td>
         <td>$${producto.precio}</td>
@@ -79,7 +138,7 @@ const renderProductos = () => {
         tablaProductosBody.appendChild(tr);
     });
 
-    // Event Listeners
+    // Event Listeners para ELIMINAR
     document.querySelectorAll('.btn-eliminar').forEach(boton => {
         boton.addEventListener('click', async () => {
             const id = (boton as HTMLElement).dataset.id;
@@ -95,6 +154,7 @@ const renderProductos = () => {
         });
     });
 
+    // Event Listeners para EDITAR
     document.querySelectorAll('.btn-editar').forEach(boton => {
         boton.addEventListener('click', () => {
             const id = (boton as HTMLElement).dataset.id;
@@ -104,26 +164,50 @@ const renderProductos = () => {
         });
     });
 };
+// -----------------------------
+// FIN: RENDERIZADO TABLA
+// -----------------------------
 
-// Busca el nombre de una categoría usando su ID (usa el select actual)
+
+// -----------------------------
+// UTILDAD: OBTENER NOMBRE DE CATEGORÍA
+// -----------------------------
+// Busca en el <select> el <option> con el id dado y devuelve su textContent.
+// Fin de esta sección: función utilitaria lista para mostrar el nombre en la tabla.
 const getCategoriaNombre = (id: number | null) => {
     if (!id) return 'Desconocida';
     const option = categoriaSelect.querySelector(`option[value="${id}"]`) as HTMLOptionElement;
     return option ? option.textContent || 'Desconocida' : 'Desconocida';
 };
+// -----------------------------
+// FIN: OBTENER NOMBRE DE CATEGORÍA
+// -----------------------------
 
-// Mostrar / ocultar modal
+
+// -----------------------------
+// MODAL: MOSTRAR Y OCULTAR
+// -----------------------------
+// Funciones pequeñas para abrir/cerrar el modal de producto y resetear el form.
+// Fin de esta sección: control del modal listo.
 const showModal = (title: string) => {
     modalTitulo.textContent = title;
-    modalProducto.classList.remove('hidden');
+    modalProducto.style.display = "flex";
 };
 const hideModal = () => {
-    modalProducto.classList.add('hidden');
+    modalProducto.style.display = "none";
     formProducto.reset();
     productoIdInput.value = '';
 };
+// -----------------------------
+// FIN: MODAL
+// -----------------------------
 
-// Cargar datos desde backend y popular productos[]
+
+// -----------------------------
+// DATA: CARGAR PRODUCTOS DESDE BACKEND
+// -----------------------------
+// Hace una petición al backend, mapea los DTOs a `IProducto` y renderiza la tabla.
+// Fin de esta sección: productos sincronizados con la BD y mostrados en pantalla.
 const cargarProductosDesdeBackend = async () => {
     try {
         const dtos = await getProductos();
@@ -132,13 +216,21 @@ const cargarProductosDesdeBackend = async () => {
     } catch (err) {
         console.error('Error al cargar productos desde backend:', err);
         alert('No se pudo obtener la lista de productos del servidor. Reintentá más tarde.');
-        // opcional: dejar productos vacíos o mantener fallback local
+        // En caso de error mostramos tabla vacía
         productos = [];
         renderProductos();
     }
 };
+// -----------------------------
+// FIN: DATA
+// -----------------------------
 
-// Manejo editar (carga producto en form)
+
+// -----------------------------
+// HANDLER: CARGAR DATOS EN EL FORMULARIO PARA EDITAR
+// -----------------------------
+// Cuando el usuario hace click en "Editar", esta función carga los valores en el modal.
+// Fin de esta sección: form listo para que el usuario modifique y guarde.
 const handleEditProducto = (id: number) => {
     const producto = productos.find(p => p.id === id);
     if (!producto) return;
@@ -148,18 +240,34 @@ const handleEditProducto = (id: number) => {
     precioInput.value = producto.precio.toString();
     stockInput.value = producto.stock?.toString() ?? '0';
     categoriaSelect.value = producto.categoriaId?.toString() ?? '';
-    imagenInput.value = producto.imagen;
+    imagenInput.value = producto.imagenURL;
     disponibleInput.checked = producto.disponible;
     showModal('Editar Producto');
 };
+// -----------------------------
+// FIN: HANDLER EDITAR
+// -----------------------------
 
-// INICIO
+
+// -----------------------------
+// INICIALIZACIÓN (IIFE)
+// -----------------------------
+// Punto de entrada: cargamos el dropdown de categorías y los productos desde la BD.
+// Fin de esta sección: la UI queda poblada al abrir la página.
 (async () => {
     await renderCategoriasDropdown();
     await cargarProductosDesdeBackend();
 })();
+// -----------------------------
+// FIN: INICIALIZACIÓN
+// -----------------------------
 
-// Eventos UI
+
+// -----------------------------
+// EVENTOS UI: BOTONES Y FORM
+// -----------------------------
+// Listeners para nuevos productos, cancelar, cerrar modal y envío del formulario.
+// Fin de esta sección: la UI está completamente interactiva.
 btnNuevoProducto.addEventListener('click', () => {
     formProducto.reset();
     productoIdInput.value = '';
@@ -178,6 +286,7 @@ formProducto.addEventListener('submit', async (event) => {
     const stock = parseInt(stockInput.value);
     const categoriaId = parseInt(categoriaSelect.value);
     const imagen = imagenInput.value.trim();
+    const disponible = disponibleInput.checked;
 
     if (!nombre || !descripcion || isNaN(precio) || !categoriaId || !imagen) {
         alert("Por favor, completá todos los campos obligatorios.");
@@ -190,18 +299,20 @@ formProducto.addEventListener('submit', async (event) => {
         precio,
         stock,
         categoriaId,
-        imagenURL: imagen
+        imagenURL: imagen,
+        disponible: disponible
     };
 
     try {
         if (!idString) {
-            // Crear
+            // Crear nuevo producto en el backend
             await crearProducto(dtoPayload);
         } else {
-            // Actualizar
+            // Actualizar producto existente en el backend
             const id = parseInt(idString);
             await actualizarProducto(id, dtoPayload);
         }
+        // Refrescar la lista desde backend y cerrar modal
         await cargarProductosDesdeBackend();
         hideModal();
     } catch (err) {
@@ -209,4 +320,16 @@ formProducto.addEventListener('submit', async (event) => {
         alert('Ocurrió un error guardando el producto.');
     }
 });
+buttonLogout.addEventListener("click", () => {
+    logoutUser();
+    navigate("/src/pages/auth/login/login.html");
+});
+// -----------------------------
+// FIN: EVENTOS UI
+// -----------------------------
+
+
 export {};
+// -----------------------------
+// FIN DEL ARCHIVO products.ts
+// -----------------------------

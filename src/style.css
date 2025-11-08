@@ -108,6 +108,13 @@ body {
 }
 
 /* Cards y Tablas */
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 .card {
     background: white;
     border-radius: 10px;
@@ -264,14 +271,18 @@ body {
     resize: vertical;
 }
 
-/* Product Card (para home store) */
 .product-card {
-    background: white;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    transition: transform 0.2s;
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  transition: transform 0.2s;
+  margin-right: 1em;
+  display: inline-block;
+  vertical-align: top; /* asegura alineación superior */
+  width: 220px;
+  min-height: 400px; /* ajustá según el contenido promedio */
 }
 
 .product-card:hover {

@@ -1,9 +1,9 @@
 import type { Rol } from "./Rol";
 
 export interface IUser {
-  id: number;           // ✅ Agregado
+  id?: number;
   nombre: string;
   email: string;
-  password?: string;    // ✅ Cambiado a opcional (no siempre viene en las respuestas)
+  password?: string;
   rol?: Rol;
 }

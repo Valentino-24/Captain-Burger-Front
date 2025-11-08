@@ -4,6 +4,7 @@ import { navigate } from "../../../utils/navigate";
 import { getCart, updateQuantity, removeFromCart, clearCart } from "../../../utils/cart";
 import { getProducto, crearPedido } from "../../../utils/api";
 import type { IProducto } from "../../../types/IProducto";
+import type { EstadoPedido } from "../../../types/IPedido";
 
 // Elementos del DOM
 const buttonLogout = document.getElementById("button_logout") as HTMLButtonElement;
@@ -76,7 +77,7 @@ const renderizarCarrito = () => {
         const itemDiv = document.createElement("div");
         itemDiv.className = "cart-item";
         itemDiv.innerHTML = `
-            <img src="${producto.imagen || '/placeholder.jpg'}" alt="${producto.nombre}">
+            <img src="${producto.imagenURL || '/placeholder.jpg'}" alt="${producto.nombre}">
             
             <div class="cart-item-info">
                 <h3>${producto.nombre}</h3>
@@ -205,21 +206,25 @@ formCheckout.addEventListener("submit", async (e) => {
         alert("Error: Usuario no autenticado");
         return;
     }
-
+    const usuarioId = usuario.id;
     const telefono = (document.getElementById("telefono") as HTMLInputElement).value;
     const direccion = (document.getElementById("direccion") as HTMLInputElement).value;
     const metodoPago = (document.getElementById("metodoPago") as HTMLSelectElement).value;
     const notas = (document.getElementById("notas") as HTMLTextAreaElement).value;
-
+    let total = Number(totalElement.textContent.replace(/[^0-9.-]+/g, ""));
     // Preparar datos del pedido
     const pedidoData = {
-        usuarioId: usuario.id,
+        usuarioId: usuarioId!,
         telefono,
+        estado: 'pending' as EstadoPedido,
+        total: total,
         direccion,
         metodoPago,
         notas: notas || undefined,
-        items: productosCarrito.map(p => ({
+        detalles: productosCarrito.map(p => ({
             productoId: p.id,
+            productoNombre: p.nombre,
+            productoImagen: p.imagenURL,
             cantidad: p.quantity,
             precioUnitario: p.precio
         }))

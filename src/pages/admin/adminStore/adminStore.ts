@@ -138,7 +138,7 @@ buttonLogout.addEventListener("click", () => {
 
 // Inicialización
 const initPage = async () => {
-    checkAuthUser("USUARIO", "/src/pages/auth/login/login.html");
+    checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
     actualizarContadorCarrito(); // ✅ Actualizar al cargar
     
     try {

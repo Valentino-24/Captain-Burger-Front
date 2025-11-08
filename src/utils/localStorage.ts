@@ -8,7 +8,7 @@
       .then((data) => {
 
         console.log('✅ Usuario guardado en backend:', data);
-        localStorage.setItem('userData', JSON.stringify(data)); // guardás el que vuelve del backend
+        localStorage.setItem('userData', JSON.stringify(data));
       })
       .catch((err) => {
         console.error('❌ Error al guardar usuario:', err);
@@ -16,7 +16,7 @@
   };
 
   export const inicioSesion = (userData: IUser) => {
-    loginUsuario(userData.email, userData.password)
+    loginUsuario(userData.email, userData.password!)
       .then((data) => {
         localStorage.setItem('userData', JSON.stringify(data));
         let u = JSON.parse(localStorage.getItem('userData') as string);
@@ -24,7 +24,7 @@
         if (u.rol === "ADMIN") {
           navigate("/src/pages/admin/products/products.html");
         } else if (u.rol === "USUARIO") {
-          navigate("/src/pages/client/home/home.html");
+          navigate("/src/pages/store/home/home.html");
         }
       })
       .catch((err) => {

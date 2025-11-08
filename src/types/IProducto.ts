@@ -5,6 +5,6 @@ export interface IProducto {
     precio: number;
     stock: number;
     categoriaId: number;
-    imagen: string;
+    imagenURL: string;
     disponible: boolean;
 }
