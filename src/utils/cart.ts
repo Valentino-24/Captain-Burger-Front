@@ -10,8 +10,6 @@ const CART_KEY = 'shoppingCart';
 // Obtiene el carrito actual desde localStorage
 export const getCart = (): ICartItem[] => {
     const cart = localStorage.getItem(CART_KEY);
-    // Si 'cart' existe, lo "parsea" (convierte de string a objeto)
-    // Si no, devuelve un array vacío []
     return cart ? JSON.parse(cart) : [];
 };
 
@@ -46,18 +44,15 @@ export const addToCart = (productId: number) => {
     alert('¡Producto agregado al carrito!');
 };
 
-/**
- *  Elimina un producto del carrito
- */
+
+// Elimina un producto del carrito
 export const removeFromCart = (productId: number): void => {
     const cart = getCart();
     const updatedCart = cart.filter(item => item.productId !== productId);
     saveCart(updatedCart);
 };
 
-/**
- * Actualiza la cantidad de un producto
- */
+// Actualiza la cantidad de un producto en el carrito
 export const updateQuantity = (productId: number, quantity: number): void => {
     if (quantity <= 0) {
         removeFromCart(productId);
@@ -73,16 +68,12 @@ export const updateQuantity = (productId: number, quantity: number): void => {
     }
 };
 
-/**
- * Vacía el carrito completamente
- */
+// Limpia todo el carrito
 export const clearCart = (): void => {
     localStorage.removeItem(CART_KEY);
 };
 
-/**
- * Obtiene la cantidad total de items en el carrito
- */
+// Obtiene el número total de ítems en el carrito
 export const getCartCount = (): number => {
     const cart = getCart();
     return cart.reduce((total, item) => total + item.quantity, 0);

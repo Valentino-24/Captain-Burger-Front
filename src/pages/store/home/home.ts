@@ -120,7 +120,7 @@ const renderProductos = async () => {
 
                 if (id) {
                     addToCart(parseInt(id));
-                    actualizarContadorCarrito(); // ✅ Actualizar contador
+                    actualizarContadorCarrito(); // Actualizar contador
                 }
             });
         });
@@ -140,7 +140,7 @@ buttonLogout.addEventListener("click", () => {
 // Inicialización
 const initPage = async () => {
     checkAuthUser("USUARIO", "/src/pages/auth/login/login.html");
-    actualizarContadorCarrito(); // ✅ Actualizar al cargar
+    actualizarContadorCarrito(); // Actualizar al cargar
     
     try {
         await Promise.all([
