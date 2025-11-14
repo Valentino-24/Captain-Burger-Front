@@ -87,19 +87,21 @@ const cargarPedidosAdmin = async () => {
 };
 
 // Render de la tabla con posibilidad de filtro
-const renderTabla = (lista: IPedido[]) => {
+const renderTabla = async (lista: IPedido[]) => {
   const estadoFiltro = filterEstado.value;
   const filas = (lista ?? []).filter(p => estadoFiltro === 'all' ? true : p.estado === estadoFiltro);
 
   tablaPedidosBody.innerHTML = '';
-  filas.forEach(async pedido => {
+  // Construimos un array de Promesas que crean cada fila
+  const rowPromises = filas.map(async (pedido) => {
+    // pedimos nombre de usuario (async)
     const userOrderName = await getUsuario(pedido.usuarioId!);
-    const tr = document.createElement('tr');
-    const usuarioText = userOrderName.nombre;
+    const usuarioText = userOrderName?.nombre ?? (pedido.usuarioId ?? 'N/A');
     const fechaText = formatearFecha(pedido.fecha);
     const totalText = `$${(pedido.total ?? 0).toFixed(2)}`;
     const estado = pedido.estado ?? 'pending';
 
+    const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${pedido.id}</td>
       <td>${usuarioText}</td>
@@ -115,7 +117,15 @@ const renderTabla = (lista: IPedido[]) => {
     tablaPedidosBody.appendChild(tr);
   });
 
-  // listeners para ver detalle
+   // Esperamos a que todas las filas hayan sido creadas e insertadas en el DOM
+  await Promise.all(rowPromises);
+
+ // Ahora SÍ registramos los listeners (ya existen los botones)
+  document.querySelectorAll('.btn-ver').forEach(b => {
+    // quitamos listeners previos por si acaso (defensa)
+    b.replaceWith(b.cloneNode(true));
+  });
+  // volver a seleccionar los botones clonados (limpios) y asignar handler
   document.querySelectorAll('.btn-ver').forEach(b => {
     b.addEventListener('click', async (e) => {
       const id = Number((e.currentTarget as HTMLElement).dataset.id);
