@@ -41,7 +41,6 @@ export const addToCart = (productId: number) => {
 
     // 6. Damos feedback al usuario (opcional pero útil)
     console.log('Carrito actualizado:', cart);
-    alert('¡Producto agregado al carrito!');
 };
 
 

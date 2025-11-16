@@ -1,3 +1,4 @@
+// src/pages/admin/products/products.ts
 import type { IProducto } from "../../../types/IProducto";
 import type { ICategoria } from "../../../types/ICategoria";
 import { getProductos, crearProducto, actualizarProducto, borrarProducto, getCategorias } from "../../../utils/api";
@@ -8,7 +9,10 @@ import { navigate } from "../../../utils/navigate";
 let productos: IProducto[] = [];
 
 checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
-// Elementos del DOM
+
+// ---------------------------
+// DOM elements
+// ---------------------------
 const btnNuevoProducto = document.getElementById("btn-nuevo-producto") as HTMLButtonElement;
 const btnCancelar = document.getElementById("btn-cancelar") as HTMLButtonElement;
 const btnCerrarModalProducto = document.getElementById("btn-cerrar-modal-producto") as HTMLSpanElement;
@@ -30,6 +34,97 @@ const userName = document.getElementById("user-name") as HTMLSpanElement;
 const user = localStorage.getItem("userData");
 userName.textContent = user ? JSON.parse(user).nombre : "Admin";
 
+// ---------------------------
+// Modales dinámicos (reutilizables)
+// ---------------------------
+const createModalElement = (innerHtml: string) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'dynamic-modal-backdrop';
+    backdrop.style.position = 'fixed';
+    backdrop.style.left = '0';
+    backdrop.style.top = '0';
+    backdrop.style.width = '100%';
+    backdrop.style.height = '100%';
+    backdrop.style.display = 'flex';
+    backdrop.style.alignItems = 'center';
+    backdrop.style.justifyContent = 'center';
+    backdrop.style.zIndex = '9999';
+    backdrop.style.background = 'rgba(0,0,0,0.4)';
+
+    const container = document.createElement('div');
+    container.className = 'dynamic-modal';
+    container.style.background = '#fff';
+    container.style.padding = '18px';
+    container.style.borderRadius = '8px';
+    container.style.width = 'min(560px, 94%)';
+    container.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
+    container.innerHTML = innerHtml;
+
+    backdrop.appendChild(container);
+    document.body.appendChild(backdrop);
+    return { backdrop, container };
+};
+
+/**
+ * showInfoModal: modal simple con botón Aceptar (resuelve Promise cuando se cierra)
+ */
+const showInfoModal = (title: string, text: string) => {
+    return new Promise<void>((resolve) => {
+        const inner = `
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h3 style="margin:0">${title}</h3>
+            <div style="white-space:pre-wrap">${text}</div>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px">
+              <button id="dynamic-ok" class="btn btn-primary">Aceptar</button>
+            </div>
+          </div>
+        `;
+        const { backdrop } = createModalElement(inner);
+        const ok = backdrop.querySelector('#dynamic-ok') as HTMLButtonElement;
+        const cleanup = () => {
+            backdrop.remove();
+            resolve();
+        };
+        ok.addEventListener('click', cleanup);
+        backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) cleanup();
+        });
+    });
+};
+
+/**
+ * showConfirmModal: modal con Aceptar/Cancelar -> resuelve true/false
+ */
+const showConfirmModal = (title: string, text: string) => {
+    return new Promise<boolean>((resolve) => {
+        const inner = `
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h3 style="margin:0">${title}</h3>
+            <div style="white-space:pre-wrap">${text}</div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+              <button id="dynamic-cancel" class="btn">Cancelar</button>
+              <button id="dynamic-yes" class="btn btn-primary">Aceptar</button>
+            </div>
+          </div>
+        `;
+        const { backdrop } = createModalElement(inner);
+        const yes = backdrop.querySelector('#dynamic-yes') as HTMLButtonElement;
+        const cancel = backdrop.querySelector('#dynamic-cancel') as HTMLButtonElement;
+        const cleanup = (result: boolean) => {
+            backdrop.remove();
+            resolve(result);
+        };
+        yes.addEventListener('click', () => cleanup(true));
+        cancel.addEventListener('click', () => cleanup(false));
+        backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) cleanup(false);
+        });
+    });
+};
+
+// ---------------------------
+// Helper: DTO -> IProducto
+// ---------------------------
 const dtoToIProducto = (dto: any): IProducto => {
     return {
         id: dto.id,
@@ -39,27 +134,33 @@ const dtoToIProducto = (dto: any): IProducto => {
         stock: dto.stock,
         categoriaId: dto.categoriaId ?? null,
         imagenURL: dto.imagenURL ?? '',
-        disponible: dto.disponible
+        disponible: dto.disponible ?? false
     } as IProducto;
 };
 
-//Renderizado categorías en el dropdown
-
+// ---------------------------
+// Cargar y renderizar categorías en <select>
+// ---------------------------
 const renderCategoriasDropdown = async () => {
     categoriaSelect.innerHTML = '';
-    // Intentamos obtener del backend
-    const categoriasFromBackend = await getCategorias().catch(() => null);
-    const lista = categoriasFromBackend;
-    lista.forEach((categoria: ICategoria) => {
-        const option = document.createElement('option');
-        option.value = categoria.id.toString();
-        option.textContent = categoria.nombre;
-        categoriaSelect.appendChild(option);
-    });
+    try {
+        const categoriasFromBackend = await getCategorias().catch(() => null);
+        const lista = categoriasFromBackend ?? [];
+        lista.forEach((categoria: ICategoria) => {
+            const option = document.createElement('option');
+            option.value = categoria.id.toString();
+            option.textContent = categoria.nombre;
+            categoriaSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error('Error al cargar categorías:', err);
+        await showInfoModal('Error', 'No se pudieron cargar las categorías desde el servidor.');
+    }
 };
 
-//Renderizado tabla de productos
-
+// ---------------------------
+// Render tabla productos
+// ---------------------------
 const renderProductos = () => {
     tablaProductosBody.innerHTML = '';
 
@@ -84,18 +185,21 @@ const renderProductos = () => {
         tablaProductosBody.appendChild(tr);
     });
 
-    // Listeners para ELIMINAR
+    // Listeners para ELIMINAR (ahora con modal confirm)
     document.querySelectorAll('.btn-eliminar').forEach(boton => {
         boton.addEventListener('click', async () => {
             const id = (boton as HTMLElement).dataset.id;
-            if (id && confirm(`¿Estás seguro que querés eliminar el producto con ID ${id}?`)) {
-                try {
-                    await borrarProducto(parseInt(id));
-                    await cargarProductosDesdeBackend();
-                } catch (err) {
-                    console.error('Error al eliminar producto:', err);
-                    alert('No se pudo eliminar el producto');
-                }
+            if (!id) return;
+            const confirmar = await showConfirmModal('Confirmar eliminación', `¿Estás seguro que querés eliminar el producto con ID ${id}?`);
+            if (!confirmar) return;
+
+            try {
+                await borrarProducto(parseInt(id));
+                await cargarProductosDesdeBackend();
+                await showInfoModal('Eliminado', `Producto ${id} eliminado correctamente.`);
+            } catch (err) {
+                console.error('Error al eliminar producto:', err);
+                await showInfoModal('Error', 'No se pudo eliminar el producto. Revisá la consola para más detalles.');
             }
         });
     });
@@ -111,18 +215,21 @@ const renderProductos = () => {
     });
 };
 
+// ---------------------------
 // Obtener nombre de categoría por ID
-
+// ---------------------------
 const getCategoriaNombre = (id: number | null) => {
     if (!id) return 'Desconocida';
     const option = categoriaSelect.querySelector(`option[value="${id}"]`) as HTMLOptionElement;
     return option ? option.textContent || 'Desconocida' : 'Desconocida';
 };
 
-// Mostrar y ocultar modal
-
+// ---------------------------
+// Mostrar / ocultar modal de formulario (tu modal existente)
+// ---------------------------
 const showModal = (title: string) => {
     modalTitulo.textContent = title;
+    // uso de display:flex para mantener compatibilidad con tu CSS anterior
     modalProducto.style.display = "flex";
 };
 const hideModal = () => {
@@ -131,8 +238,9 @@ const hideModal = () => {
     productoIdInput.value = '';
 };
 
-// Traer productos desde el backend
-
+// ---------------------------
+// Traer productos desde backend
+// ---------------------------
 const cargarProductosDesdeBackend = async () => {
     try {
         const dtos = await getProductos();
@@ -140,15 +248,16 @@ const cargarProductosDesdeBackend = async () => {
         renderProductos();
     } catch (err) {
         console.error('Error al cargar productos desde backend:', err);
-        alert('No se pudo obtener la lista de productos del servidor. Reintentá más tarde.');
+        await showInfoModal('Error', 'No se pudo obtener la lista de productos del servidor. Reintentá más tarde.');
         // En caso de error mostramos tabla vacía
         productos = [];
         renderProductos();
     }
 };
 
-// Handler para editar producto
-
+// ---------------------------
+// Handler editar (carga producto al form)
+// ---------------------------
 const handleEditProducto = (id: number) => {
     const producto = productos.find(p => p.id === id);
     if (!producto) return;
@@ -159,19 +268,21 @@ const handleEditProducto = (id: number) => {
     stockInput.value = producto.stock?.toString() ?? '0';
     categoriaSelect.value = producto.categoriaId?.toString() ?? '';
     imagenInput.value = producto.imagenURL;
-    disponibleInput.checked = producto.disponible;
+    disponibleInput.checked = producto.disponible ?? false;
     showModal('Editar Producto');
 };
 
-// Inicialización
-
+// ---------------------------
+// INIT: cargar categorías y productos
+// ---------------------------
 (async () => {
     await renderCategoriasDropdown();
     await cargarProductosDesdeBackend();
 })();
 
-// Listeners de eventos UI
-
+// ---------------------------
+// UI Event Listeners
+// ---------------------------
 btnNuevoProducto.addEventListener('click', () => {
     formProducto.reset();
     productoIdInput.value = '';
@@ -192,8 +303,9 @@ formProducto.addEventListener('submit', async (event) => {
     const imagen = imagenInput.value.trim();
     const disponible = disponibleInput.checked;
 
+    // Validación: reemplazamos alert por modal informativo
     if (!nombre || !descripcion || isNaN(precio) || !categoriaId || !imagen) {
-        alert("Por favor, completá todos los campos obligatorios.");
+        await showInfoModal("Formulario incompleto", "Por favor, completá todos los campos obligatorios.");
         return;
     }
 
@@ -210,17 +322,21 @@ formProducto.addEventListener('submit', async (event) => {
     try {
         if (!idString) {
             await crearProducto(dtoPayload);
+            await showInfoModal('Creado', 'Producto creado correctamente.');
         } else {
             const id = parseInt(idString);
             await actualizarProducto(id, dtoPayload);
+            await showInfoModal('Actualizado', 'Producto actualizado correctamente.');
         }
         await cargarProductosDesdeBackend();
         hideModal();
     } catch (err) {
         console.error('Error al guardar producto:', err);
-        alert('Ocurrió un error guardando el producto.');
+        await showInfoModal('Error', 'Ocurrió un error guardando el producto. Revisá la consola para más detalles.');
     }
 });
+
+// Logout
 buttonLogout.addEventListener("click", () => {
     logoutUser();
     navigate("/src/pages/auth/login/login.html");

@@ -5,19 +5,20 @@ import { checkAuthUser } from "../../../utils/auth";
 import { logoutUser } from "../../../utils/localStorage";
 import { navigate } from "../../../utils/navigate";
 import { getPedido, getProductos, actualizarEstadoPedidoApi, getUsuario } from "../../../utils/api";
-
-
 import { getPedidos } from "../../../utils/api";
 
 // --- PROTECCIÓN / DOM ---
 checkAuthUser("ADMIN", "/src/pages/auth/login/login.html");
 
+// ---------------------------
+// DOM elements
+// ---------------------------
 const buttonLogout = document.getElementById("button_logout") as HTMLButtonElement;
 const tablaPedidosBody = document.getElementById("tabla-pedidos-body") as HTMLTableSectionElement;
 const filterEstado = document.getElementById("filter-estado") as HTMLSelectElement;
 const btnRefrescar = document.getElementById("btn-refrescar") as HTMLButtonElement;
 
-// Modal
+// Modal (detalle)
 const modal = document.getElementById("modal-pedido") as HTMLDivElement;
 const modalClose = document.getElementById("modal-close") as HTMLSpanElement;
 const btnCerrarModal = document.getElementById("btn-cerrar-modal") as HTMLButtonElement;
@@ -41,10 +42,11 @@ const modalEstadoBadge = document.getElementById("modal-estado-badge") as HTMLSp
 const modalEstadoIcon = document.getElementById("modal-estado-icon") as HTMLDivElement;
 const modalEstadoMensaje = document.getElementById("modal-estado-mensaje") as HTMLParagraphElement;
 
-// Constantes
+// ---------------------------
+// Constantes / Config
+// ---------------------------
 const COSTO_ENVIO = 500;
 
-// Estados (misma configuración visual que usás en user orders)
 const estadosConfig: Record<string, { texto: string; icon: string; clase: string; mensaje: string }> = {
   pending: { texto: 'Pendiente', icon: '⏳', clase: 'badge-warning', mensaje: 'Pedido pendiente' },
   processing: { texto: 'En Preparación', icon: '👨‍🍳', clase: 'badge-info', mensaje: 'En preparación' },
@@ -52,7 +54,81 @@ const estadosConfig: Record<string, { texto: string; icon: string; clase: string
   cancelled: { texto: 'Cancelado', icon: '❌', clase: 'badge-danger', mensaje: 'Pedido cancelado' }
 };
 
-// productMap: carga todos los productos una sola vez para mostrar nombre/imagen por productoId
+// ---------------------------
+// Modales dinámicos (reutilizables)
+// ---------------------------
+const createModalElement = (innerHtml: string) => {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'dynamic-modal-backdrop';
+  backdrop.style.position = 'fixed';
+  backdrop.style.left = '0';
+  backdrop.style.top = '0';
+  backdrop.style.width = '100%';
+  backdrop.style.height = '100%';
+  backdrop.style.display = 'flex';
+  backdrop.style.alignItems = 'center';
+  backdrop.style.justifyContent = 'center';
+  backdrop.style.zIndex = '9999';
+  backdrop.style.background = 'rgba(0,0,0,0.35)';
+
+  const container = document.createElement('div');
+  container.className = 'dynamic-modal';
+  container.style.background = '#fff';
+  container.style.padding = '16px';
+  container.style.borderRadius = '8px';
+  container.style.width = 'min(640px, 96%)';
+  container.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+  container.innerHTML = innerHtml;
+
+  backdrop.appendChild(container);
+  document.body.appendChild(backdrop);
+  return { backdrop, container };
+};
+
+const showInfoModal = (title: string, text: string) => {
+  return new Promise<void>((resolve) => {
+    const inner = `
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h3 style="margin:0">${title}</h3>
+        <div style="white-space:pre-wrap">${text}</div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+          <button id="dynamic-ok" class="btn btn-primary">Aceptar</button>
+        </div>
+      </div>
+    `;
+    const { backdrop } = createModalElement(inner);
+    const ok = backdrop.querySelector('#dynamic-ok') as HTMLButtonElement;
+    const cleanup = () => { backdrop.remove(); resolve(); };
+    ok.addEventListener('click', cleanup);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) cleanup(); });
+  });
+};
+
+const showConfirmModal = (title: string, text: string) => {
+  return new Promise<boolean>((resolve) => {
+    const inner = `
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h3 style="margin:0">${title}</h3>
+        <div style="white-space:pre-wrap">${text}</div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button id="dynamic-cancel" class="btn">Cancelar</button>
+          <button id="dynamic-yes" class="btn btn-primary">Aceptar</button>
+        </div>
+      </div>
+    `;
+    const { backdrop } = createModalElement(inner);
+    const yes = backdrop.querySelector('#dynamic-yes') as HTMLButtonElement;
+    const cancel = backdrop.querySelector('#dynamic-cancel') as HTMLButtonElement;
+    const cleanup = (result: boolean) => { backdrop.remove(); resolve(result); };
+    yes.addEventListener('click', () => cleanup(true));
+    cancel.addEventListener('click', () => cleanup(false));
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) cleanup(false); });
+  });
+};
+
+// ---------------------------
+// productMap: precarga productos para mostrar nombre/imagen
+// ---------------------------
 const productMap = new Map<number, any>();
 const cargarProductosMap = async () => {
   try {
@@ -63,40 +139,56 @@ const cargarProductosMap = async () => {
   }
 };
 
-// Utility: formatea fecha ISO
+// ---------------------------
+// Util: formatear fecha
+// ---------------------------
 const formatearFecha = (fecha: string) => {
   if (!fecha) return '';
   const d = new Date(fecha);
   return d.toLocaleString('es-AR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
-// Estado en memoria
+// ---------------------------
+// Estado local
+// ---------------------------
 let pedidosCache: IPedido[] = [];
 let pedidoActual: IPedido | null = null;
 
+// ---------------------------
 // Cargar lista completa de pedidos
+// ---------------------------
 const cargarPedidosAdmin = async () => {
   try {
     const pedidos: IPedido[] = await getPedidos();
     pedidosCache = (pedidos ?? []).map(p => ({ ...p, estado: p.estado ?? 'pending' }));
-    renderTabla(pedidosCache);
+    await renderTabla(pedidosCache);
   } catch (err) {
     console.error("Error al cargar pedidos admin:", err);
     tablaPedidosBody.innerHTML = `<tr><td colspan="8">Error al cargar pedidos</td></tr>`;
+    await showInfoModal("Error", "No se pudieron cargar los pedidos del servidor.");
   }
 };
 
-// Render de la tabla con posibilidad de filtro
+// ---------------------------
+// Render tabla con filtro (resuelve nombres de usuario async)
+// ---------------------------
 const renderTabla = async (lista: IPedido[]) => {
   const estadoFiltro = filterEstado.value;
   const filas = (lista ?? []).filter(p => estadoFiltro === 'all' ? true : p.estado === estadoFiltro);
 
   tablaPedidosBody.innerHTML = '';
-  // Construimos un array de Promesas que crean cada fila
+
+  // Creamos fila por pedido de forma asíncrona para poder pedir nombres
   const rowPromises = filas.map(async (pedido) => {
-    // pedimos nombre de usuario (async)
-    const userOrderName = await getUsuario(pedido.usuarioId!);
-    const usuarioText = userOrderName?.nombre ?? (pedido.usuarioId ?? 'N/A');
+    let usuarioText: string | number = pedido.usuarioId ?? 'N/A';
+    try {
+      const userObj = await getUsuario(pedido.usuarioId!);
+      if (userObj && userObj.nombre) usuarioText = userObj.nombre;
+    } catch (err) {
+      // si falla, dejamos el id
+      console.warn('No se pudo obtener usuario para pedido', pedido.id, err);
+    }
+
     const fechaText = formatearFecha(pedido.fecha);
     const totalText = `$${(pedido.total ?? 0).toFixed(2)}`;
     const estado = pedido.estado ?? 'pending';
@@ -117,15 +209,16 @@ const renderTabla = async (lista: IPedido[]) => {
     tablaPedidosBody.appendChild(tr);
   });
 
-   // Esperamos a que todas las filas hayan sido creadas e insertadas en el DOM
   await Promise.all(rowPromises);
 
- // Ahora SÍ registramos los listeners (ya existen los botones)
-  document.querySelectorAll('.btn-ver').forEach(b => {
-    // quitamos listeners previos por si acaso (defensa)
-    b.replaceWith(b.cloneNode(true));
+  // Registramos listeners de forma segura: clonamos botones para eliminar listeners previos
+  const botones = Array.from(document.querySelectorAll('.btn-ver')) as HTMLElement[];
+  botones.forEach(b => {
+    const clone = b.cloneNode(true) as HTMLElement;
+    b.parentElement?.replaceChild(clone, b);
   });
-  // volver a seleccionar los botones clonados (limpios) y asignar handler
+
+  // Ahora asignamos handler
   document.querySelectorAll('.btn-ver').forEach(b => {
     b.addEventListener('click', async (e) => {
       const id = Number((e.currentTarget as HTMLElement).dataset.id);
@@ -134,15 +227,20 @@ const renderTabla = async (lista: IPedido[]) => {
   });
 };
 
-// Abrir modal con detalle del pedido
+// ---------------------------
+// Abrir modal detalle de pedido
+// ---------------------------
 const abrirModalPedido = async (id: number) => {
   try {
     const pedido = await getPedido(id);
+    if (!pedido) {
+      await showInfoModal("Error", "No se encontró el pedido solicitado.");
+      return;
+    }
     pedidoActual = pedido;
-    // Asegurar estado
     pedido.estado = pedido.estado ?? 'pending';
 
-    // Llenar campos del modal
+    // Llenar campos
     modalPedidoId.textContent = String(pedido.id);
     modalUsuarioId.textContent = String(pedido.usuarioId ?? '');
     modalDireccion.textContent = pedido.direccion ?? '';
@@ -162,8 +260,6 @@ const abrirModalPedido = async (id: number) => {
     modalEstadoIcon.textContent = cfg.icon;
     modalEstadoMensaje.textContent = cfg.mensaje;
 
-  
-
     // Productos (usar productMap para nombre/imagen)
     modalProductosList.innerHTML = '';
     const detalles: IDetallePedido[] = (pedido.detalles ?? []).slice();
@@ -181,7 +277,7 @@ const abrirModalPedido = async (id: number) => {
           <p>Cantidad: ${d.cantidad}</p>
           <p>Precio unitario: $${precio}</p>
         </div>
-        <div class="producto-total"><strong>$${( (d.precioUnitario ?? 0) * (d.cantidad ?? 0) ).toFixed(2)}</strong></div>
+        <div class="producto-total"><strong>$${(((d.precioUnitario ?? 0) * (d.cantidad ?? 0))).toFixed(2)}</strong></div>
       `;
       modalProductosList.appendChild(itemDiv);
     });
@@ -190,7 +286,7 @@ const abrirModalPedido = async (id: number) => {
     const subtotal = detalles.reduce((acc, it) => acc + ((it.precioUnitario ?? 0) * (it.cantidad ?? 0)), 0);
     modalSubtotal.textContent = `$${subtotal.toFixed(2)}`;
     modalEnvio.textContent = `$${COSTO_ENVIO.toFixed(2)}`;
-    modalTotal.textContent = `$${(pedido.total ?? subtotal + COSTO_ENVIO).toFixed(2)}`;
+    modalTotal.textContent = `$${(pedido.total ?? (subtotal + COSTO_ENVIO)).toFixed(2)}`;
 
     // Mostrar fecha
     modalFecha.textContent = formatearFecha(pedido.fecha);
@@ -202,28 +298,36 @@ const abrirModalPedido = async (id: number) => {
     modal.style.display = 'flex';
   } catch (err) {
     console.error("Error abriendo modal pedido:", err);
-    alert("No se pudo cargar el detalle del pedido.");
+    await showInfoModal("Error", "No se pudo cargar el detalle del pedido. Revisá la consola para más detalles.");
   }
 };
 
-// Actualizar estado del pedido (PUT)
+// ---------------------------
+// Actualizar estado (PUT/PATCH) — usa modal para mostrar resultado
+// ---------------------------
 const actualizarEstadoPedido = async () => {
-  if (!pedidoActual) return alert("No hay pedido seleccionado.");
+  if (!pedidoActual) {
+    await showInfoModal("Atención", "No hay pedido seleccionado.");
+    return;
+  }
   const nuevoEstado = selectEstadoActualizar.value;
+  const confirmar = await showConfirmModal("Confirmar cambio de estado", `¿Querés cambiar el estado del pedido #${pedidoActual.id} a "${nuevoEstado}"?`);
+  if (!confirmar) return;
 
   try {
     await actualizarEstadoPedidoApi(pedidoActual.id!, nuevoEstado);
-    // refrescar lista y modal
     await cargarPedidosAdmin();
     modal.style.display = 'none';
-    alert("Estado actualizado correctamente.");
+    await showInfoModal("Estado actualizado", "El estado del pedido fue actualizado correctamente.");
   } catch (err) {
     console.error("Error actualizando estado:", err);
-    alert("No se pudo actualizar el estado.");
+    await showInfoModal("Error", "No se pudo actualizar el estado del pedido. Revisá la consola para más detalles.");
   }
 };
 
-// Listeners de botones
+// ---------------------------
+// Listeners y utils
+// ---------------------------
 buttonLogout.addEventListener('click', () => {
   logoutUser();
   navigate("/src/pages/auth/login/login.html");
@@ -235,9 +339,11 @@ btnActualizarEstado.addEventListener('click', actualizarEstadoPedido);
 btnRefrescar.addEventListener('click', cargarPedidosAdmin);
 filterEstado.addEventListener('change', () => renderTabla(pedidosCache));
 
+// ---------------------------
 // Inicialización
+// ---------------------------
 const initPage = async () => {
-  await cargarProductosMap(); 
+  await cargarProductosMap();
   await cargarPedidosAdmin();
 };
 
